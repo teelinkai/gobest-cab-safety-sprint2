@@ -1,0 +1,22 @@
+# Data Manipulation
+pandas
+numpy
+sqlalchemy
+pymysql
+
+# Machine Learning
+scikit-learn
+xgboost
+imbalanced-learn
+scipy
+
+# Experiment Tracking
+mlflow
+prefect
+
+# Visualization
+matplotlib
+seaborn
+
+# Deployment
+pyinstaller

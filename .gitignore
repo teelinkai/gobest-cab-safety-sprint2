@@ -1,0 +1,34 @@
+# --- Python & System ---
+__pycache__/
+*.py[cod]
+*$py.class
+.DS_Store
+Thumbs.db
+
+# --- Virtual Environments ---
+venv/
+env/
+.env
+
+# --- Data (NEVER COMMIT THESE) ---
+*.csv
+*.xlsx
+*.zip
+*.tar.gz
+CA2_Sprint2/data/
+sensor_data/
+
+# --- IDE Settings ---
+.vscode/
+.idea/
+
+# --- MLflow & Artifacts ---
+mlruns/
+*.pkl
+*.joblib
+*.model
+
+# --- PyInstaller Build Folders ---
+build/
+dist/
+*.spec

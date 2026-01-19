@@ -1,22 +1,36 @@
-# Data Manipulation
+# Core ML & Data Science
 pandas
 numpy
-sqlalchemy
-pymysql
-
-# Machine Learning
-scikit-learn
-xgboost
-imbalanced-learn
+scikit-Learn
 scipy
-
-# Experiment Tracking
-mlflow
-prefect
 
 # Visualization
 matplotlib
 seaborn
+# MLflow & Tracking
+mlflow
+protobuf
 
-# Deployment
-pyinstaller
+# Database
+pymysql
+sqlalchemy
+
+# Workflow Management
+prefect
+
+# Model Saving
+joblib
+pickle5
+
+# GUI
+tk
+
+# Imbalanced Learning
+imbalanced-learn
+
+# Advanced Models (Optional but recommended)
+xgboost
+lightgbm
+# Utilities
+python-dotenv
+tqdm

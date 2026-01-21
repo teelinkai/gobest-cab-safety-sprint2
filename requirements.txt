@@ -1,36 +1,24 @@
-# Core ML & Data Science
+# MINIMAL REQUIREMENTS FOR PHASE 1A - DATA ANALYSIS
+# Install these for the first notebook
+
+# Core Data Science (REQUIRED)
 pandas
 numpy
-scikit-Learn
-scipy
+scikit-learn
 
-# Visualization
+# Visualization (REQUIRED)
 matplotlib
 seaborn
-# MLflow & Tracking
+
+# MLflow (REQUIRED for Phase 1B onwards)
 mlflow
-protobuf
 
-# Database
-pymysql
-sqlalchemy
-
-# Workflow Management
-prefect
-
-# Model Saving
-joblib
-pickle5
-
-# GUI
-tk
-
-# Imbalanced Learning
+# Imbalanced Learning (REQUIRED for Phase 1C)
 imbalanced-learn
 
-# Advanced Models (Optional but recommended)
-xgboost
-lightgbm
-# Utilities
-python-dotenv
-tqdm
+# Advanced Models (OPTIONAL - install later if needed)
+# xgboost
+# lightgbm
+
+# Note: tqdm, joblib already come with scikit-learn
+# Note: Python 3.8+ has pickle built-in, no pickle5 needed

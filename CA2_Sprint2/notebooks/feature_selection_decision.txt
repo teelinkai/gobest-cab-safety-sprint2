@@ -1,0 +1,20 @@
+FEATURE SELECTION DECISION
+================================================================================
+
+Decision: USE feature selection
+
+Reasons:
+  ❌ Recall decreased by 0.0000
+  ✅ Training time reduced by 41.3%
+
+Selected 10 features:
+1. trip_duration_sec
+2. speed_mean
+3. n_points
+4. gyro_mag_std
+5. speed_max
+6. jerk_linear_mean
+7. pct_time_speed_over_80
+8. gyro_jerk_mag_mean
+9. turn_sharpness_index
+10. pct_time_high_accel

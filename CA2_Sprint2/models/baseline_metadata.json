@@ -1,6 +1,6 @@
 {
   "model_name": "Baseline Logistic Regression",
-  "mlflow_run_id": "a0c7ba7ee1244a5793c982cb8be4936f",
+  "mlflow_run_id": "c468d1d26ba8465380e1d89f88feebd3",
   "train_accuracy": 0.7786666666666666,
   "val_accuracy": 0.77425,
   "val_roc_auc": 0.7196354734786028,

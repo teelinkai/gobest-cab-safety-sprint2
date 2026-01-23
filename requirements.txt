@@ -17,8 +17,8 @@ mlflow
 imbalanced-learn
 
 # Advanced Models (OPTIONAL - install later if needed)
-# xgboost
-# lightgbm
+xgboost
+lightgbm
 
 # Note: tqdm, joblib already come with scikit-learn
 # Note: Python 3.8+ has pickle built-in, no pickle5 needed

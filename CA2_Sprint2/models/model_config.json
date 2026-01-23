@@ -1,0 +1,26 @@
+{
+    "model_type": "Logistic Regression",
+    "C": 2.0,
+    "penalty": "elasticnet",
+    "solver": "saga",
+    "decision_threshold": 0.22999999999999995,
+    "n_features": 10,
+    "selected_features": [
+        "trip_duration_sec",
+        "speed_mean",
+        "n_points",
+        "gyro_mag_std",
+        "speed_max",
+        "jerk_linear_mean",
+        "pct_time_speed_over_80",
+        "gyro_jerk_mag_mean",
+        "turn_sharpness_index",
+        "pct_time_high_accel"
+    ],
+    "test_recall": 0.6686686686686687,
+    "test_precision": 0.392018779342723,
+    "test_f1": 0.49426563078061414,
+    "test_accuracy": 0.65825,
+    "test_roc_auc": 0.731797775783114,
+    "mlflow_run_id": "95ba974eccb84f49b89ac4c4f8c7419d"
+}

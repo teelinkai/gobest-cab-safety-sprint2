@@ -342,98 +342,30 @@ class BatchModeView(tk.Frame):
         thread.start()
         
     def _process_file_thread(self):
+        """Process files in background thread - FIXED VERSION"""
         try:
-            from ..core.data_processor import DataProcessor
-            import pandas as pd
-
-            processor = DataProcessor()
-
-            # 1) Classify selected files by DATASET STAGE (raw vs aggregated)
-            raw_sensor_files = []
-            agg_trip_files = []       # e.g., bi_dataset.csv (already aggregated)
-            skipped = []
-
-            for fp in self.selected_files:
-                stage = processor.detect_dataset_stage(fp)  # <-- implement in DataProcessor
-
-                if stage == "RAW_SENSOR":
-                    raw_sensor_files.append(fp)
-                elif stage in ("AGG_TRIP", "FEATURES_READY"):
-                    agg_trip_files.append(fp)
-                else:
-                    skipped.append(fp.name)
-
-            # Choose best available input type
-            use_agg_direct = len(agg_trip_files) > 0
-            use_raw_sensor = len(raw_sensor_files) > 0
-
-            if not use_agg_direct and not use_raw_sensor:
-                self._on_error("No valid input detected. Please select RAW sensor CSV(s)[Sensor_features] or an aggregated trip-level CSV.")
-                return
-
-            all_features = []
-
-            if use_agg_direct:
-                # Load aggregated features directly (skip feature engineering)
-                total_files = len(agg_trip_files)
-                for i, file_path in enumerate(agg_trip_files, start=1):
-                    self._update_status(f"📥 Loading aggregated file {i}/{total_files}: {file_path.name}", config.COLOR_PRIMARY)
-                    self._show_progress((i - 1) / max(total_files, 1) * 0.8)
-
-                    df = pd.read_csv(file_path)
-                    df.columns = [c.strip() for c in df.columns]
-
-                    all_features.append(df)
-
-                combined_features = pd.concat(all_features, ignore_index=True)
-
-            else:
-                # Process raw sensor files (validate + feature engineer)
-                total_files = len(raw_sensor_files)
-
-                for i, file_path in enumerate(raw_sensor_files, start=1):
-                    self._update_status(f"📁 Validating sensor file {i}/{total_files}: {file_path.name}", config.COLOR_PRIMARY)
-                    self._show_progress((i - 1) / max(total_files, 1) * 0.2)
-
-                    is_valid, error_msg = processor.validate_csv(file_path)
-                    if not is_valid:
-                        self._on_error(f"Validation failed for {file_path.name}: {error_msg}")
-                        return
-
-                    self._update_status(f"📥 Loading sensor file {i}/{total_files}: {file_path.name}", config.COLOR_PRIMARY)
-                    self._show_progress(0.2 + (i - 1) / max(total_files, 1) * 0.3)
-
-                    raw_df = processor.load_csv_fast(file_path)
-
-                    self._update_status(f"⚙️ Extracting features {i}/{total_files}: {file_path.name}", config.COLOR_PRIMARY)
-                    self._show_progress(0.5 + (i - 1) / max(total_files, 1) * 0.3)
-
-                    features_df = processor.process_batch_data(raw_df, batch_size=config.BATCH_SIZE)
-                    all_features.append(features_df)
-
-                combined_features = pd.concat(all_features, ignore_index=True)
-
-            # 5) Show user what got skipped (optional)
-            if skipped:
-                self._update_status(
-                    "⚠️ Some selected files were ignored (not supported for prediction):\n"
-                    + "\n".join(f"• {name}" for name in skipped),
-                    config.COLOR_WARNING
-                )
-
-            self._update_status("🤖 Making predictions...", config.COLOR_PRIMARY)
-            self._show_progress(0.9)
-
-            # TODO: replace mock prediction with actual model inference
-            num_trips = len(combined_features)
-            num_dangerous = int(num_trips * 0.2)
-
-            self._show_progress(1.0)
-            self._update_status(f"✅ Processing complete! {num_trips} trips analyzed.", config.COLOR_SUCCESS)
-            self.after(1000, lambda: self._show_results_screen(num_trips, num_dangerous))
-
+            # Update status
+            self.after(0, lambda: self._update_status("🔄 Processing files...", config.COLOR_PRIMARY))
+            self.after(0, lambda: self._show_progress(0.1))
+            
+            # Process using controller
+            file_path = self.selected_files[0]  # Use first file
+            
+            self.after(0, lambda: self._update_status(f"📂 Loading {file_path.name}...", config.COLOR_PRIMARY))
+            self.after(0, lambda: self._show_progress(0.3))
+            
+            # Call controller to do all the work
+            prediction_data = self.controller.process_batch_file(str(file_path))
+            
+            self.after(0, lambda: self._show_progress(1.0))
+            self.after(0, lambda: self._update_status("✅ Processing complete!", config.COLOR_SUCCESS))
+            
+            # Navigate to results view
+            self.after(500, lambda: self._navigate_to_results(prediction_data))
+            
         except Exception as e:
-            self._on_error(f"Error processing files: {str(e)}")
+            error_msg = str(e)
+            self.after(0, lambda: self._on_error(error_msg))
             
     def _on_error(self, error_message: str):
         """Handle processing error"""
@@ -441,24 +373,6 @@ class BatchModeView(tk.Frame):
         self._update_status(f"❌ {error_message}", config.COLOR_DANGER)
         self.is_processing = False
         self.enter_btn.config(state='normal', bg=config.COLOR_PRIMARY)
-        
-    def _show_results_screen(self, num_trips: int, num_dangerous: int):
-        """Show results summary"""
-        self._hide_progress()
-        self.is_processing = False
-        self.enter_btn.config(state='normal', bg=config.COLOR_PRIMARY)
-        
-        # For now, show a message box
-        # TODO: Implement actual results view with detailed predictions
-        result_msg = f"""
-        Processing Complete!
-
-        Total Trips: {num_trips}
-        Dangerous Trips: {num_dangerous} ({num_dangerous/num_trips*100:.1f}%)
-        Safe Trips: {num_trips - num_dangerous} ({(num_trips-num_dangerous)/num_trips*100:.1f}%)
-
-        Feature engineering and predictions completed successfully.
-                """
         
         messagebox.showinfo("Results", result_msg.strip())
         self._update_status("Ready to process another file", config.COLOR_TEXT)
@@ -496,3 +410,24 @@ class BatchModeView(tk.Frame):
                 
         widget.bind('<Enter>', on_enter)
         widget.bind('<Leave>', on_leave)
+
+    def _navigate_to_results(self, prediction_data):
+        """Navigate to results view"""
+        self._hide_progress()
+        self.is_processing = False
+        self.enter_btn.config(state='normal', bg=config.COLOR_PRIMARY)
+        
+        # Show results view
+        self.show_results(prediction_data)
+
+    def _on_error(self, error_message: str):
+        """Handle errors"""
+        self._hide_progress()
+        self._update_status(f"❌ Error: {error_message}", config.COLOR_DANGER)
+        self.is_processing = False
+        self.enter_btn.config(state='normal', bg=config.COLOR_PRIMARY)
+        
+        messagebox.showerror(
+            "Processing Error",
+            f"Failed to process file:\n\n{error_message}"
+        )

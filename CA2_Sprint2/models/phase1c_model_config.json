@@ -1,0 +1,37 @@
+{
+  "model_name": "Phase 1C - Threshold Tuning",
+  "model_type": "Logistic Regression",
+  "imbalance_technique": "Threshold Tuning",
+  "threshold": 0.2,
+  "default_threshold": 0.5,
+  "n_features": 10,
+  "features": [
+    "trip_duration_sec",
+    "speed_mean",
+    "n_points",
+    "gyro_mag_std",
+    "speed_max",
+    "jerk_linear_mean",
+    "pct_time_speed_over_80",
+    "gyro_jerk_mag_mean",
+    "turn_sharpness_index",
+    "pct_time_high_accel"
+  ],
+  "hyperparameters": {
+    "penalty": "l2",
+    "C": 1.0,
+    "solver": "lbfgs",
+    "max_iter": 1000,
+    "random_state": 42
+  },
+  "validation_metrics": {
+    "recall": 0.7525050100200401,
+    "precision": 0.35274776890558945,
+    "f1": 0.4803325871442277,
+    "accuracy": 0.59375,
+    "roc_auc": 0.7184485560060827
+  },
+  "mlflow_run_id": "7fc670ce3a824aab97e2d548f38b21e7",
+  "production_ready": true,
+  "notes": "Selected as production model - best recall (75%+) for safety-critical application"
+}

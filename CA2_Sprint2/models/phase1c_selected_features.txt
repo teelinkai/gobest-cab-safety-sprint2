@@ -1,10 +1,10 @@
 trip_duration_sec
 speed_mean
-n_points
-gyro_mag_std
+turn_sharpness_index
+pct_time_cruising
+pct_time_high_accel
+gyro_mag_mean
 speed_max
 jerk_linear_mean
-pct_time_speed_over_80
-gyro_jerk_mag_mean
-turn_sharpness_index
-pct_time_high_accel
+n_zigzag_events
+longest_smooth_segment_sec

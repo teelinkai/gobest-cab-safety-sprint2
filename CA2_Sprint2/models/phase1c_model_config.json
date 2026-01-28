@@ -1,37 +1,25 @@
 {
   "model_name": "Phase 1C - Threshold Tuning",
-  "model_type": "Logistic Regression",
-  "imbalance_technique": "Threshold Tuning",
-  "threshold": 0.2,
-  "default_threshold": 0.5,
-  "n_features": 10,
+  "optimization_strategy": "Maximize Accuracy s.t. Recall >= 0.6",
+  "threshold": 0.25,
   "features": [
     "trip_duration_sec",
     "speed_mean",
-    "n_points",
-    "gyro_mag_std",
+    "turn_sharpness_index",
+    "pct_time_cruising",
+    "pct_time_high_accel",
+    "gyro_mag_mean",
     "speed_max",
     "jerk_linear_mean",
-    "pct_time_speed_over_80",
-    "gyro_jerk_mag_mean",
-    "turn_sharpness_index",
-    "pct_time_high_accel"
+    "n_zigzag_events",
+    "longest_smooth_segment_sec"
   ],
-  "hyperparameters": {
-    "penalty": "l2",
-    "C": 1.0,
-    "solver": "lbfgs",
-    "max_iter": 1000,
-    "random_state": 42
+  "metrics": {
+    "val_accuracy": 0.65875,
+    "val_precision": 0.3855271366188397,
+    "val_recall": 0.6192384769539078,
+    "val_f1": 0.47520184544405997,
+    "val_roc_auc": 0.7097739783364198
   },
-  "validation_metrics": {
-    "recall": 0.7525050100200401,
-    "precision": 0.35274776890558945,
-    "f1": 0.4803325871442277,
-    "accuracy": 0.59375,
-    "roc_auc": 0.7184485560060827
-  },
-  "mlflow_run_id": "7fc670ce3a824aab97e2d548f38b21e7",
-  "production_ready": true,
-  "notes": "Selected as production model - best recall (75%+) for safety-critical application"
+  "mlflow_run_id": "a4e88e68beb446759d858e868b3202c2"
 }

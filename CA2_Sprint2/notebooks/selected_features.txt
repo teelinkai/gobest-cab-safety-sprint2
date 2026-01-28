@@ -1,0 +1,12 @@
+Selected 10 features for Phases 1C & 1D:
+============================================================
+1. trip_duration_sec
+2. speed_mean
+3. turn_sharpness_index
+4. pct_time_cruising
+5. pct_time_high_accel
+6. gyro_mag_mean
+7. speed_max
+8. jerk_linear_mean
+9. n_zigzag_events
+10. longest_smooth_segment_sec

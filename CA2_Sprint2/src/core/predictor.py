@@ -54,14 +54,19 @@ class Predictor:
                 print(f"⚠️  No scaler found (features may not be scaled)")
                 self.scaler = None
             
-            # Load selected features list
-            if config.FEATURES_PATH.exists():
-                with open(config.FEATURES_PATH, 'r') as f:
-                    self.selected_features = [line.strip() for line in f.readlines()]
-                print(f"✅ Features loaded: {len(self.selected_features)} features")
+            # Load selected features from model_metadata.json
+            if config.CONFIG_PATH and config.CONFIG_PATH.exists():
+                import json
+                with open(config.CONFIG_PATH, 'r') as f:
+                    self.model_config = json.load(f)
+                    self.selected_features = self.model_config.get('selected_features', config.MODEL_FEATURES)
+                    self.threshold = self.model_config.get('optimal_threshold', config.PREDICTION_THRESHOLD)
+                print(f"✅ Features loaded from metadata: {len(self.selected_features)} features")
+                print(f"✅ Optimal threshold loaded: {self.threshold}")
             else:
                 # Fallback to config
                 self.selected_features = config.MODEL_FEATURES
+                self.threshold = config.PREDICTION_THRESHOLD
                 print(f"⚠️  Using features from config: {len(self.selected_features)} features")
             
             # Load model configuration
@@ -81,9 +86,9 @@ class Predictor:
             print(f"   Model Type: Logistic Regression")
             print(f"   Features: {len(self.selected_features)}")
             print(f"   Threshold: {self.threshold}")
-            if self.model_config:
-                print(f"   Expected Recall: {self.model_config.get('validation_metrics', {}).get('recall', 'N/A'):.2%}")
-                print(f"   Expected Precision: {self.model_config.get('validation_metrics', {}).get('precision', 'N/A'):.2%}")
+            # if self.model_config:
+            #     print(f"   Expected Recall: {self.model_config.get('validation_metrics', {}).get('recall', 'N/A'):.2%}")
+            #     print(f"   Expected Precision: {self.model_config.get('validation_metrics', {}).get('precision', 'N/A'):.2%}")
             print("=" * 60)
             
         except Exception as e:

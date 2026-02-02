@@ -208,9 +208,31 @@ class BatchModeView(tk.Frame):
             fg=config.COLOR_TEXT
         ).pack(side=tk.LEFT)
         
-        # File list area
-        self.file_list_frame = tk.Frame(card, bg=config.COLOR_CARD)
-        self.file_list_frame.pack(fill=tk.BOTH, expand=True, padx=25, pady=10)
+        # --- File list area with Scrollbar ---
+        list_container = tk.Frame(card, bg=config.COLOR_CARD)
+        list_container.pack(fill=tk.BOTH, expand=True, padx=25, pady=10)
+
+        # Canvas and Scrollbar
+        self.file_canvas = tk.Canvas(list_container, bg=config.COLOR_CARD, highlightthickness=0, height=200)
+        scrollbar = tk.Scrollbar(list_container, orient="vertical", command=self.file_canvas.yview)
+        
+        # The frame that will actually hold the file items
+        self.file_list_frame = tk.Frame(self.file_canvas, bg=config.COLOR_CARD)
+        
+        # Link scrollbar to canvas
+        self.file_canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Create window inside canvas
+        self.canvas_window = self.file_canvas.create_window((0, 0), window=self.file_list_frame, anchor="nw")
+        
+        # Bind events to update scroll region
+        self.file_list_frame.bind("<Configure>", lambda e: self.file_canvas.configure(scrollregion=self.file_canvas.bbox("all")))
+        self.file_canvas.bind("<Configure>", lambda e: self.file_canvas.itemconfig(self.canvas_window, width=e.width))
+
+        # Pack them
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.file_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # -----------------------------------
         
         # Initial empty state
         self.empty_label = tk.Label(
@@ -339,7 +361,11 @@ class BatchModeView(tk.Frame):
         # Clear existing
         for widget in self.file_list_frame.winfo_children():
             widget.destroy()
-        
+
+        # Update the canvas window size immediately
+        self.file_list_frame.update_idletasks()
+        self.file_canvas.configure(scrollregion=self.file_canvas.bbox("all"))
+
         if not self.selected_files:
             # Show empty state
             self.empty_label = tk.Label(

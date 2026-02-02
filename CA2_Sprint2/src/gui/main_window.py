@@ -26,7 +26,7 @@ class MainWindow:
         self.root.configure(bg=config.COLOR_BACKGROUND)
         
         # Prevent window resizing for consistent layout
-        self.root.resizable(False, False)
+        self.root.resizable(True, True)
         
         # Initialize controller
         self.controller = ModeController()

@@ -40,22 +40,47 @@ class ResultsView(tk.Frame):
         self._setup_ui()
         
     def _setup_ui(self):
-        """Setup the UI components"""
-        # Title with prediction result
-        self._create_result_title()
+        """Setup the UI components with a main scrollbar"""
+        # Create a main canvas and scrollbar for the whole page
+        main_canvas = tk.Canvas(self, bg=config.COLOR_BACKGROUND, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=main_canvas.yview)
         
-        # Details section
-        self._create_details_section()
+        # Create a frame inside the canvas to hold all content
+        content_frame = tk.Frame(main_canvas, bg=config.COLOR_BACKGROUND)
         
-        # History section
-        self._create_history_section()
+        # Configure scrolling
+        scrollable_window = main_canvas.create_window((0, 0), window=content_frame, anchor="nw")
         
-        # Predict Again button
-        self._create_predict_again_button()
+        def configure_scroll(event):
+            main_canvas.configure(scrollregion=main_canvas.bbox("all"))
+            # Match width to window
+            main_canvas.itemconfig(scrollable_window, width=event.width)
+            
+        content_frame.bind("<Configure>", configure_scroll)
+        main_canvas.bind("<Configure>", lambda e: main_canvas.itemconfig(scrollable_window, width=e.width))
+        main_canvas.configure(yscrollcommand=scrollbar.set)
         
-    def _create_result_title(self):
+        # Pack the scroll layout
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        main_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # --- EXISTING UI CREATION (Passed 'content_frame' as parent) ---
+        
+        # Title with prediction result (Pass content_frame instead of self)
+        self._create_result_title(content_frame)
+        
+        # Details section (Pass content_frame instead of self)
+        self._create_details_section(content_frame)
+        
+        # History section (Pass content_frame instead of self)
+        self._create_history_section(content_frame)
+        
+        # Predict Again button (Pass content_frame instead of self)
+        self._create_predict_again_button(content_frame)
+        
+    def _create_result_title(self, parent): # Added parent argument
         """Create the result title with color coding"""
-        title_frame = tk.Frame(self, bg=config.COLOR_BACKGROUND)
+        title_frame = tk.Frame(parent, bg=config.COLOR_BACKGROUND) # Used parent
         title_frame.pack(pady=(50, 20))
         
         # Check if batch mode (has total_trips) or realtime mode (has prediction)
@@ -130,10 +155,10 @@ class ResultsView(tk.Frame):
             )
             confidence_label.pack(pady=(5, 0))
         
-    def _create_details_section(self):
+    def _create_details_section(self, parent): # Added parent argument
         """Create the details section showing prediction info"""
         details_frame = tk.LabelFrame(
-            self,
+            parent, # Used parent
             text="Prediction Details",
             font=(config.FONT_FAMILY, config.FONT_SIZE_LABEL, "bold"),
             bg=config.COLOR_BACKGROUND,
@@ -224,10 +249,10 @@ class ResultsView(tk.Frame):
             )
             info_label.pack()
         
-    def _create_history_section(self):
+    def _create_history_section(self, parent): # Added parent argument
         """Create the session history section"""
         history_frame = tk.LabelFrame(
-            self,
+            parent, # Used parent
             text="History for this session",
             font=(config.FONT_FAMILY, config.FONT_SIZE_LABEL, "bold"),
             bg=config.COLOR_BACKGROUND,
@@ -274,10 +299,10 @@ class ResultsView(tk.Frame):
         history_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-    def _create_predict_again_button(self):
+    def _create_predict_again_button(self, parent): # Added parent argument
         """Create the Predict Again button"""
         predict_again_btn = tk.Button(
-            self,
+            parent, # Used parent
             text="Predict Again",
             font=(config.FONT_FAMILY, config.FONT_SIZE_BUTTON + 2, "bold"),
             bg=config.COLOR_PRIMARY,

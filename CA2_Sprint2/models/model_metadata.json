@@ -1,0 +1,25 @@
+{
+  "optimal_threshold": 0.4917294887440549,
+  "f1_at_threshold": 0.4825303419910491,
+  "model_type": "Logistic Regression",
+  "hyperparameters": {
+    "C": 0.005,
+    "class_weight": "balanced",
+    "max_iter": 2000,
+    "penalty": "l2",
+    "random_state": 42,
+    "solver": "saga"
+  },
+  "selected_features": [
+    "trip_duration_sec",
+    "speed_mean",
+    "turn_sharpness_index",
+    "pct_time_cruising",
+    "gyro_accel_instability",
+    "speed_max",
+    "pct_time_high_accel",
+    "jerk_linear_mean",
+    "accel_risk_score",
+    "longest_smooth_segment_sec"
+  ]
+}

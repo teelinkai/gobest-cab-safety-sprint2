@@ -1,20 +1,20 @@
 FEATURE SELECTION DECISION
 ================================================================================
 
-Decision: DO NOT USE feature selection
+Decision: USE feature selection
 
 Reasons:
-  ❌ Recall decreased by 0.0060
-  ⚠️  Training time reduced slightly (15.0%)
+  ⚠️  Recall improved slightly (0.0010)
+  ✅ Training time reduced by 63.6%
 
 Selected 10 features:
 1. trip_duration_sec
 2. speed_mean
 3. turn_sharpness_index
 4. pct_time_cruising
-5. pct_time_high_accel
-6. gyro_mag_mean
-7. speed_max
+5. gyro_accel_instability
+6. speed_max
+7. pct_time_high_accel
 8. jerk_linear_mean
-9. n_zigzag_events
+9. accel_risk_score
 10. longest_smooth_segment_sec

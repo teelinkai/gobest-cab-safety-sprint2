@@ -59,6 +59,7 @@ COLOR_TEXT_MUTED = "#64748b"       # Muted text
 COLOR_BORDER = "#334155"           # Border color
 COLOR_SHADOW = "#000000"           # Shadow
 COLOR_TEXT_LIGHT = "#f1f5f9"
+COLOR_TEXT_PRIMARY = "#f1f5f9"
 # Font Settings - Modern
 FONT_FAMILY = "Segoe UI"
 FONT_FAMILY_MONO = "Consolas"

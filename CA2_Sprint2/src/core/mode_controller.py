@@ -232,52 +232,45 @@ class ModeController:
         
         return prediction_data
         
-    def process_realtime_data(self, booking_id: str, trip_data_df: pd.DataFrame = None) -> Dict:
+    def process_realtime_data(self, features_dict: Dict) -> Dict:
         """
-        Process real-time trip data and return prediction
+        Process manually entered trip data
         
         Args:
-            booking_id: Booking ID for the trip
-            trip_data_df: Optional DataFrame with sensor data for the trip
+            features_dict: Dictionary containing raw and calculated features
             
         Returns:
             Dictionary containing prediction results
         """
+        booking_id = features_dict.get('bookingID', 'MANUAL')
+        
         print("\n" + "="*60)
         print(f"🔴 REAL-TIME PROCESSING: {booking_id}")
         print("="*60)
         
-        # Process the trip
-        if trip_data_df is not None and not trip_data_df.empty:
-            # Extract features
-            features_df = self.processor.process_realtime_trip(booking_id, trip_data_df)
-            
-            # Predict
-            prediction, confidence = self.predictor.predict_single(features_df)
-        else:
-            # Placeholder if no data provided
-            print("⚠️  No trip data provided - using mock prediction")
-            prediction = "SAFE"
-            confidence = 0.85
+        # Convert dictionary to DataFrame (single row)
+        # We wrap values in lists [] to create the DataFrame
+        features_df = pd.DataFrame([features_dict])
         
-        # Create prediction data
+        # Predict using the existing predictor logic
+        # The predictor handles scaling and feature selection automatically
+        prediction, confidence = self.predictor.predict_single(features_df)
+        
+        # Create prediction data package
         prediction_data = {
             'mode': 'realtime',
             'booking_id': booking_id,
             'prediction': prediction,
             'confidence': float(confidence),
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            # Pass input data back for display if needed
+            'details': features_dict 
         }
         
         # Store current prediction
         self.current_prediction = prediction_data
         self.add_to_history(prediction_data)
         
-        # Print summary
-        print("\n" + "="*60)
-        print("✅ REAL-TIME PREDICTION COMPLETE!")
-        print("="*60)
-        print(f"   Booking ID: {booking_id}")
         print(f"   Prediction: {prediction}")
         print(f"   Confidence: {confidence:.1%}")
         print("="*60 + "\n")

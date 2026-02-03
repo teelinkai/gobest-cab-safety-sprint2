@@ -10,7 +10,7 @@ from pathlib import Path
 import os
 
 from .. import config
-from .cyber_components import NeonButton
+from .cyber_components import RetroButton
 
 # Default directory for history
 # In a real app, this might come from config.py

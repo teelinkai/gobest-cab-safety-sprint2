@@ -1,6 +1,7 @@
 """
-GOBEST CAB CYBERPUNK CONFIGURATION
-🔥 NEON-POWERED SAFETY PREDICTION SYSTEM 🔥
+GOBEST CAB CYNOSURE CONFIGURATION
+🗂️ RETRO TERMINAL SURVEILLANCE SYSTEM 🗂️
+Inspired by Cynosure Corporation Technical Manuals
 """
 
 from pathlib import Path
@@ -32,83 +33,70 @@ MODEL_FEATURES = [
 
 PREDICTION_THRESHOLD = 0.4917
 
-# ==================== CYBERPUNK UI SETTINGS ====================
-WINDOW_TITLE = "⚡ GOBEST CAB :: NEURAL SAFETY ANALYZER ⚡"
+# ==================== CYNOSURE UI THEME ====================
+WINDOW_TITLE = "⚠️ GOBEST CAB :: CYNOSURE SAFETY TERMINAL ⚠️"
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 800
 WINDOW_GEOMETRY = f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}"
 
-# 🎨 CYBERPUNK COLOR PALETTE
-# Primary Neons
-COLOR_NEON_CYAN = "#00f0ff"           # Electric Cyan
-COLOR_NEON_PINK = "#ff006e"           # Hot Pink
-COLOR_NEON_PURPLE = "#bd00ff"         # Vivid Purple
-COLOR_NEON_BLUE = "#0066ff"           # Electric Blue
-COLOR_NEON_GREEN = "#00ff88"          # Matrix Green
-COLOR_NEON_YELLOW = "#ffea00"         # Neon Yellow
-COLOR_NEON_ORANGE = "#ff6600"         # Cyber Orange
+# 🎨 CYNOSURE RETRO TERMINAL PALETTE (Beige Paper + Dark Text)
+# Background Colors - Aged Paper/Terminal
+COLOR_BG_PAPER = "#E8DCC0"            # Aged beige paper
+COLOR_BG_DARKER = "#D4C4A8"           # Slightly darker beige
+COLOR_BG_CARD = "#F0E8D8"             # Light paper card
+COLOR_BG_ELEVATED = "#DED0B8"         # Elevated surface
 
-# Dark Backgrounds (Cyberpunk Noir)
-COLOR_BG_VOID = "#0a0a0f"             # Deep Space
-COLOR_BG_DARK = "#121218"             # Dark Matter
-COLOR_BG_CARD = "#1a1a24"             # Shadow Card
-COLOR_BG_ELEVATED = "#22222f"         # Elevated Surface
-COLOR_BG_GLASS = "#1a1a2480"          # Glass Effect (with alpha)
+# Text Colors - Dark on Light
+COLOR_TEXT_PRIMARY = "#2B2416"        # Dark brown/black text
+COLOR_TEXT_SECONDARY = "#4A3F2F"      # Medium brown
+COLOR_TEXT_MUTED = "#6B5D4F"          # Light brown/gray
+COLOR_TEXT_LABEL = "#8B7355"          # Label text
 
-# Accent & Gradient Colors
-COLOR_GRADIENT_START = "#bd00ff"      # Purple
-COLOR_GRADIENT_MID = "#ff006e"        # Pink
-COLOR_GRADIENT_END = "#00f0ff"        # Cyan
+# Accent Colors - Technical Diagram Style
+COLOR_ACCENT_BLUE = "#4A7BA7"         # Blueprint blue
+COLOR_ACCENT_RED = "#C84C3C"          # Warning red
+COLOR_ACCENT_GREEN = "#5A8A4F"        # Status green
+COLOR_ACCENT_ORANGE = "#D47F3C"       # Alert orange
+COLOR_ACCENT_PURPLE = "#7A5A8A"       # Section purple
 
 # Status Colors
-COLOR_SUCCESS = "#00ff88"             # Matrix Green
-COLOR_DANGER = "#ff006e"              # Hot Pink
-COLOR_WARNING = "#ffea00"             # Neon Yellow
-COLOR_INFO = "#00f0ff"                # Electric Cyan
+COLOR_SUCCESS = "#5A8A4F"             # Green (safe)
+COLOR_DANGER = "#C84C3C"              # Red (dangerous)
+COLOR_WARNING = "#D47F3C"             # Orange (warning)
+COLOR_INFO = "#4A7BA7"                # Blue (info)
 
-# Text Colors
-COLOR_TEXT_PRIMARY = "#ffffff"        # Pure White
-COLOR_TEXT_SECONDARY = "#b8b8d4"      # Light Purple-Gray
-COLOR_TEXT_MUTED = "#6666aa"          # Muted Purple
-COLOR_TEXT_NEON = "#00f0ff"           # Cyan Highlight
+# Border & Line Colors
+COLOR_BORDER_DARK = "#2B2416"         # Dark lines
+COLOR_BORDER_MEDIUM = "#4A3F2F"       # Medium lines
+COLOR_BORDER_LIGHT = "#8B7355"        # Light lines
 
-# Border & Glow Effects
-COLOR_BORDER_NEON = "#00f0ff"         # Cyan Border
-COLOR_GLOW_PINK = "#ff006e40"         # Pink Glow (alpha)
-COLOR_GLOW_CYAN = "#00f0ff40"         # Cyan Glow (alpha)
-COLOR_GLOW_PURPLE = "#bd00ff40"       # Purple Glow (alpha)
+# Section Colors (for cards/areas)
+COLOR_SECTION_ALPHA = "#B8A8D8"       # Light purple (like diagram)
+COLOR_SECTION_BRAVO = "#D8A8B8"       # Light pink
+COLOR_SECTION_VICTOR = "#A8B8D8"      # Light blue
+COLOR_SECTION_SIERRA = "#F0D8A8"      # Light orange
+COLOR_SECTION_ADMIN = "#C8C8C8"       # Gray
 
 # ==================== TYPOGRAPHY ====================
-FONT_FAMILY = "Consolas"              # Monospace for cyber feel
-FONT_FAMILY_DISPLAY = "Arial Black"   # Bold display font
-FONT_SIZE_MEGA = 48                   # Huge titlesCyberMainWindow
-FONT_SIZE_TITLE = 36                  # Main titles
-FONT_SIZE_SUBTITLE = 18               # Subtitles
-FONT_SIZE_HEADING = 16                # Section headers
-FONT_SIZE_BODY = 12                   # Body text
-FONT_SIZE_BUTTON = 14                 # Buttons
+FONT_FAMILY = "Courier New"           # Monospace terminal font
+FONT_FAMILY_DISPLAY = "Arial"         # Display font
+FONT_SIZE_MEGA = 36                   # Large titles
+FONT_SIZE_TITLE = 24                  # Section titles
+FONT_SIZE_SUBTITLE = 14               # Subtitles
+FONT_SIZE_HEADING = 16                # Headers
+FONT_SIZE_BODY = 11                   # Body text
+FONT_SIZE_BUTTON = 12                 # Buttons
 FONT_SIZE_SMALL = 10                  # Small text
-FONT_SIZE_TINY = 8                    # Micro text
+FONT_SIZE_TINY = 8                    # Labels/codes
 
 # ==================== ANIMATION SETTINGS ====================
-ANIMATION_FAST = 100      # ms - Quick transitions
-ANIMATION_NORMAL = 200    # ms - Standard animations
-ANIMATION_SLOW = 400      # ms - Smooth animations
-ANIMATION_EPIC = 800      # ms - Epic entrances
+ANIMATION_FAST = 100      # ms
+ANIMATION_NORMAL = 200    # ms
+ANIMATION_SLOW = 400      # ms
 
-# Particle Effects
-PARTICLE_COUNT = 30       # Number of background particles
-PARTICLE_SPEED = 0.5      # Pixels per frame
-
-# Glow Pulse
-GLOW_PULSE_SPEED = 20     # ms per pulse update
-GLOW_MIN_ALPHA = 30       # Minimum glow opacity
-GLOW_MAX_ALPHA = 100      # Maximum glow opacity
-
-# Scan Lines
-SCANLINE_SPEED = 2        # Pixels per frame
-SCANLINE_HEIGHT = 2       # Pixel height
-SCANLINE_OPACITY = 15     # Alpha value
+# Progress Bar Settings
+PROGRESS_BAR_HEIGHT = 30
+PROGRESS_BAR_SEGMENTS = 20  # Number of segments for retro bar
 
 # ==================== MODE SETTINGS ====================
 MODE_BATCH = "batch"
@@ -134,44 +122,34 @@ REQUIRED_COLUMNS = [
 MAX_HISTORY_ENTRIES = 50
 
 # ==================== UI ELEMENT SIZES ====================
-BUTTON_HEIGHT = 50
-BUTTON_WIDTH_SMALL = 140
-BUTTON_WIDTH_MEDIUM = 200
-BUTTON_WIDTH_LARGE = 280
+BUTTON_HEIGHT = 40
+BUTTON_WIDTH_SMALL = 120
+BUTTON_WIDTH_MEDIUM = 180
+BUTTON_WIDTH_LARGE = 240
 
-CARD_BORDER_RADIUS = 15
-CARD_PADDING = 25
+CARD_BORDER_WIDTH = 2
+CARD_PADDING = 20
 
-GLOW_OFFSET = 4  # Pixels for neon glow effect
-BORDER_WIDTH = 2
-
-# ==================== ICON SETS ====================
-ICON_BATCH = "⚡"
+# ==================== ICONS & SYMBOLS ====================
+ICON_BATCH = "📊"
 ICON_REALTIME = "🔴"
-ICON_FILE = "📁"
+ICON_FILE = "📄"
 ICON_SUCCESS = "✓"
 ICON_DANGER = "⚠"
 ICON_LOADING = "⟳"
-ICON_ROCKET = "🚀"
-ICON_CHART = "📊"
 ICON_EXPORT = "💾"
-ICON_HISTORY = "📜"
 ICON_CLEAR = "✕"
 ICON_ADD = "+"
-ICON_BRAIN = "🧠"
-ICON_EYE = "👁"
-ICON_SHIELD = "🛡"
+ICON_DATATERM = "█"
 
-# ==================== ASCII ART ====================
-ASCII_LOGO = """
-  ╔═══════════════════════════════════════╗
-  ║   G O B E S T   C A B   S Y S T E M   ║
-  ║     N E U R A L   A N A L Y Z E R     ║
-  ╚═══════════════════════════════════════╝
-"""
+# ==================== DEPARTMENT CODES ====================
+DEPT_ALPHA = "ALPHA"
+DEPT_BRAVO = "BRAVO"
+DEPT_VICTOR = "VICTOR"
+DEPT_SIERRA = "SIERRA"
+DEPT_ADMIN = "ADMINISTRATION"
 
-# ==================== SOUND SETTINGS (for future) ====================
-ENABLE_SOUND_FX = False  # Toggle for sound effects
-SOUND_CLICK = "click.wav"
-SOUND_SUCCESS = "success.wav"
-SOUND_ERROR = "error.wav"
+# ==================== CYNOSURE BRANDING ====================
+CORP_NAME = "CYNOSURE SYSTEMS"
+SYSTEM_CODE = "GOBEST-CAB-SAFETY"
+CLEARANCE_LEVEL = "AUTHORIZED PERSONNEL ONLY"

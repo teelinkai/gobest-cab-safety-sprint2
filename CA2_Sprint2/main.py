@@ -12,12 +12,12 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from src.gui.main_window import MainWindow
+from src.gui.main_window import CyberMainWindow
 
 def main():
     """Main application entry point"""
-    app = MainWindow()
-    app.run()
+    app = CyberMainWindow()
+    app.mainloop()  
 
 if __name__ == "__main__":
     main()

@@ -3,10 +3,10 @@ GUI Package
 Contains all GUI-related modules
 """
 
-from .main_window import MainWindow
-from .batch_mode_view import BatchModeView
-from .realtime_mode_view import RealtimeModeView
-from .results_view import ResultsView
+from .main_window import CyberMainWindow as MainWindow
+from .batch_mode_view import CyberBatchView as BatchModeView
+from .realtime_mode_view import CyberRealtimeView as RealtimeModeView
+from .results_view import CyberResultsView as ResultsView
 
 __all__ = [
     'MainWindow',

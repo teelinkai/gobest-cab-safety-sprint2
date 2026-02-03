@@ -1,6 +1,6 @@
 """
-Batch Mode View Module - PREMIUM CYBERPUNK EDITION
-High-tech interface for bulk data processing with full page scrolling
+⚡ CYBERPUNK BATCH PROCESSING VIEW ⚡
+Multi-file selection with neon cards and epic animations
 """
 
 import tkinter as tk
@@ -10,301 +10,586 @@ from typing import Callable, List
 import threading
 
 from .. import config
+from .cyber_components import NeonButton, CyberCard, CyberProgressBar
 
-# --- THEME CONSTANTS ---
-COLOR_BG = "#0f172a"          # Deep Slate
-COLOR_CARD = "#1e293b"        # Lighter Slate
-COLOR_ACCENT = "#38bdf8"      # Sky Blue
-COLOR_ACCENT_DIM = "#0ea5e9"  # Darker Blue
-COLOR_SUCCESS = "#10b981"     # Emerald Green
-COLOR_WARNING = "#f59e0b"     # Amber
-COLOR_DANGER = "#ef4444"      # Red
-COLOR_TEXT_MAIN = "#f1f5f9"
-COLOR_TEXT_MUTED = "#94a3b8"
 
-class CyberButton(tk.Canvas):
-    """
-    A massive, high-tech button with hover glow effects
-    """
-    def __init__(self, parent, text, command, width=200, height=50, bg_color=COLOR_ACCENT_DIM, fg_color="white", icon=""):
-        super().__init__(parent, width=width, height=height, bg=COLOR_BG, highlightthickness=0, cursor="hand2")
-        self.command = command
-        self.bg_color = bg_color
-        self.hover_color = COLOR_ACCENT
-        self.text = text
-        self.icon = icon
-        self.width = width
-        self.height = height
-        self.is_disabled = False
+class FileCard(tk.Frame):
+    """Neon file card with hover effects"""
+    
+    def __init__(self, parent, file_path: Path, on_remove: Callable):
+        super().__init__(parent, bg=config.COLOR_BG_VOID)
         
-        self.bind("<Button-1>", self._on_click)
-        self.bind("<Enter>", self._on_enter)
-        self.bind("<Leave>", self._on_leave)
+        self.file_path = file_path
+        self.on_remove = on_remove
+        self.is_hovered = False
+        
+        self._create_ui()
+        
+    def _create_ui(self):
+        """Create the file card UI"""
+        # Main card canvas
+        self.card = tk.Canvas(
+            self,
+            width=900,
+            height=60,
+            bg=config.COLOR_BG_VOID,
+            highlightthickness=0
+        )
+        self.card.pack(pady=5)
+        
+        # Bind hover events
+        self.card.bind("<Enter>", self._on_enter)
+        self.card.bind("<Leave>", self._on_leave)
+        
         self._draw()
-
-    def _draw(self, color=None):
-        if color is None: color = self.bg_color
-        self.delete("all")
+    
+    def _draw(self):
+        """Draw the card"""
+        self.card.delete("all")
         
-        # Tech border decoration
-        self.create_rectangle(2, 2, self.width-2, self.height-2, fill=color, outline=color, tags="bg")
-        self.create_polygon(
-            0, 10, 10, 0, self.width, 0, self.width, self.height-10, self.width-10, self.height, 0, self.height,
-            fill=color, outline=""
+        # Background
+        bg_color = config.COLOR_BG_ELEVATED if self.is_hovered else config.COLOR_BG_CARD
+        self._draw_rounded_rect(5, 5, 895, 55, 8, fill=bg_color, outline="")
+        
+        # Border with glow on hover
+        border_color = config.COLOR_NEON_CYAN if self.is_hovered else config.COLOR_TEXT_MUTED
+        if self.is_hovered:
+            # Glow effect - using stipple instead of alpha
+            for i in range(3):
+                self._draw_rounded_rect(
+                    3-i, 3-i, 897+i, 57+i, 8,
+                    fill="", outline=border_color, stipple="gray25", width=1
+                )
+        
+        self._draw_rounded_rect(5, 5, 895, 55, 8, fill="", outline=border_color, width=2)
+        
+        # File icon
+        self.card.create_text(
+            25, 30,
+            text="📁",
+            font=(config.FONT_FAMILY, 20),
+            fill=config.COLOR_NEON_CYAN
         )
         
-        display_text = f"{self.icon}  {self.text}" if self.icon else self.text
-        self.create_text(self.width/2, self.height/2, text=display_text, 
-                         font=(config.FONT_FAMILY, 11, "bold"), fill="white")
+        # File name
+        self.card.create_text(
+            60, 22,
+            text=self.file_path.name,
+            anchor="w",
+            font=(config.FONT_FAMILY, 11, "bold"),
+            fill=config.COLOR_TEXT_PRIMARY
+        )
+        
+        # File size
+        size_mb = self.file_path.stat().st_size / (1024 * 1024)
+        size_text = f"{size_mb:.2f} MB"
+        self.card.create_text(
+            60, 40,
+            text=size_text,
+            anchor="w",
+            font=(config.FONT_FAMILY, 9),
+            fill=config.COLOR_TEXT_MUTED
+        )
+        
+        # Remove button
+        remove_x = 850
+        if self.is_hovered:
+            # Hover state - show red X
+            self.card.create_oval(
+                remove_x-15, 15, remove_x+15, 45,
+                fill=config.COLOR_DANGER,
+                outline=""
+            )
+            self.card.create_text(
+                remove_x, 30,
+                text="✕",
+                font=(config.FONT_FAMILY, 14, "bold"),
+                fill=config.COLOR_TEXT_PRIMARY
+            )
+            
+            # Make clickable
+            self.card.tag_bind("remove", "<Button-1>", lambda e: self.on_remove(self.file_path))
+            self.card.addtag_withtag("remove", "all")
+    
+    def _draw_rounded_rect(self, x1, y1, x2, y2, radius, **kwargs):
+        """Draw rounded rectangle"""
+        points = [
+            x1+radius, y1,
+            x1+radius, y1,
+            x2-radius, y1,
+            x2-radius, y1,
+            x2, y1,
+            x2, y1+radius,
+            x2, y1+radius,
+            x2, y2-radius,
+            x2, y2-radius,
+            x2, y2,
+            x2-radius, y2,
+            x2-radius, y2,
+            x1+radius, y2,
+            x1+radius, y2,
+            x1, y2,
+            x1, y2-radius,
+            x1, y2-radius,
+            x1, y1+radius,
+            x1, y1+radius,
+            x1, y1
+        ]
+        return self.card.create_polygon(points, smooth=True, **kwargs)
+    
+    def _on_enter(self, event):
+        self.is_hovered = True
+        self._draw()
+        self.card.config(cursor="hand2")
+    
+    def _on_leave(self, event):
+        self.is_hovered = False
+        self._draw()
+        self.card.config(cursor="")
 
-    def _on_enter(self, e):
-        if not self.is_disabled: self._draw(self.hover_color)
 
-    def _on_leave(self, e):
-        if not self.is_disabled: self._draw(self.bg_color)
-
-    def _on_click(self, e):
-        if not self.is_disabled: self.command()
-
-    def set_disabled(self, disabled):
-        self.is_disabled = disabled
-        color = COLOR_CARD if disabled else self.bg_color
-        self._draw(color)
-
-
-class BatchModeView(tk.Frame):
+class CyberBatchView(tk.Frame):
+    """
+    🌟 CYBERPUNK BATCH PROCESSING VIEW 🌟
+    Multi-file processing with epic neon animations
+    """
+    
     def __init__(self, parent, controller, switch_to_realtime: Callable, show_results: Callable):
-        super().__init__(parent, bg=COLOR_BG)
+        super().__init__(parent, bg=config.COLOR_BG_VOID)
+        
         self.controller = controller
         self.switch_to_realtime = switch_to_realtime
         self.show_results = show_results
         self.selected_files: List[Path] = []
         self.is_processing = False
         
-        self._setup_ui()
+        # Setup outer scrollable wrapper
+        self._setup_main_scroll()
+    
+    def _setup_main_scroll(self):
+        """Setup the main scrollable area for the entire view"""
+        # Canvas and Scrollbar
+        self.main_canvas = tk.Canvas(self, bg=config.COLOR_BG_VOID, highlightthickness=0)
+        self.main_scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.main_canvas.yview)
         
-    def _setup_ui(self):
-        # --- 1. MAIN SCROLLABLE CONTAINER ---
-        # This ensures the whole page scrolls when minimized
-        main_canvas = tk.Canvas(self, bg=COLOR_BG, highlightthickness=0)
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=main_canvas.yview)
-        
-        # The frame that holds all content
-        self.content_frame = tk.Frame(main_canvas, bg=COLOR_BG)
-        
-        # Configure scrolling
-        self.content_frame.bind(
-            "<Configure>", 
-            lambda e: main_canvas.configure(scrollregion=main_canvas.bbox("all"))
+        # Scrollable Frame
+        self.scroll_frame = tk.Frame(self.main_canvas, bg=config.COLOR_BG_VOID)
+        self.scroll_frame.bind(
+            "<Configure>",
+            lambda e: self.main_canvas.configure(scrollregion=self.main_canvas.bbox("all"))
         )
         
-        window_id = main_canvas.create_window((0, 0), window=self.content_frame, anchor="nw")
+        # Window in canvas
+        self.window_id = self.main_canvas.create_window((0, 0), window=self.scroll_frame, anchor="nw")
         
-        # Auto-width
-        main_canvas.bind("<Configure>", lambda e: main_canvas.itemconfig(window_id, width=e.width))
-        main_canvas.configure(yscrollcommand=scrollbar.set)
+        # Resize internal frame to match canvas width
+        self.main_canvas.bind("<Configure>", lambda e: self.main_canvas.itemconfig(self.window_id, width=e.width))
+        self.main_canvas.configure(yscrollcommand=self.main_scrollbar.set)
         
-        # Pack Layout
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        main_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        # --- 2. HEADER SECTION ---
-        header_frame = tk.Frame(self.content_frame, bg=COLOR_BG)
-        header_frame.pack(fill=tk.X, padx=40, pady=(30, 20))
-
-        # Title Stack
-        title_col = tk.Frame(header_frame, bg=COLOR_BG)
-        title_col.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        # Pack everything
+        self.main_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.main_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        tk.Label(title_col, text="BATCH PROCESSOR // CORE", 
-                 font=(config.FONT_FAMILY, 28, "bold"),
-                 bg=COLOR_BG, fg="white").pack(anchor="w")
+        # Build the actual UI inside the scroll_frame
+        self._setup_ui(self.scroll_frame)
+    
+    def _setup_ui(self, parent):
+        """Setup the epic UI inside the scrollable frame"""
+        # Header section
+        self._create_header(parent)
         
-        tk.Label(title_col, text="LARGE DATASET INGESTION & ANALYSIS SYSTEM", 
-                 font=(config.FONT_FAMILY, 10, "bold"),
-                 bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w")
-
-        # Switch Button
-        self.switch_btn = CyberButton(
-            header_frame, 
-            text="SWITCH TO REAL-TIME", 
-            icon="⚡",
+        # File selection zone
+        self._create_file_zone(parent)
+        
+        # Progress section
+        self._create_progress_section(parent)
+        
+        # Action buttons
+        self._create_action_section(parent)
+    
+    def _create_header(self, parent):
+        """Create header with mode switcher"""
+        header = tk.Frame(parent, bg=config.COLOR_BG_VOID)
+        header.pack(fill=tk.X, pady=(0, 20))
+        
+        # Mode switcher button
+        mode_btn = NeonButton(
+            header,
+            text="REAL-TIME MODE",
             command=self.switch_to_realtime,
-            width=220, height=50,
-            bg_color=COLOR_CARD
+            neon_color=config.COLOR_NEON_PINK,
+            width=200,
+            height=45,
+            icon="🔴"
         )
-        self.switch_btn.pack(side=tk.RIGHT)
-
-        # --- 3. DATA INGESTION PORT (Redesigned) ---
-        ingest_container = tk.Frame(self.content_frame, bg=COLOR_BG)
-        ingest_container.pack(fill=tk.X, padx=40, pady=10)
-
-        # The Card
-        self.drop_zone = tk.Frame(ingest_container, bg=COLOR_CARD, bd=1, relief="solid")
-        self.drop_zone.pack(fill=tk.X, ipady=20)
+        mode_btn.pack(side=tk.LEFT)
         
-        # Decoration Line
-        tk.Frame(self.drop_zone, bg=COLOR_ACCENT, height=2).pack(fill=tk.X, side=tk.TOP)
-
-        # Center Content
-        center_frame = tk.Frame(self.drop_zone, bg=COLOR_CARD)
-        center_frame.pack(expand=True)
-
-        tk.Label(center_frame, text="DATA INGESTION PORT", 
-                 font=(config.FONT_FAMILY, 16, "bold"), 
-                 bg=COLOR_CARD, fg=COLOR_ACCENT).pack(pady=(10, 5))
+        # Title
+        title_frame = tk.Frame(header, bg=config.COLOR_BG_VOID)
+        title_frame.pack(side=tk.LEFT, expand=True)
         
-        tk.Label(center_frame, text="Select .CSV sensor logs for bulk processing", 
-                 font=(config.FONT_FAMILY, 10), 
-                 bg=COLOR_CARD, fg=COLOR_TEXT_MUTED).pack(pady=(0, 20))
-        
-        # Styled Button
-        self.btn_add = tk.Button(
-            center_frame, text="+ SELECT FILES", 
-            bg=COLOR_ACCENT_DIM, fg="white", 
-            font=(config.FONT_FAMILY, 11, "bold"),
-            relief="flat", padx=30, pady=10, cursor="hand2",
-            activebackground="white", activeforeground=COLOR_ACCENT_DIM,
-            command=self._add_files
+        title = tk.Label(
+            title_frame,
+            text="⚡ BATCH PROCESSING",
+            font=(config.FONT_FAMILY_DISPLAY, 28, "bold"),
+            fg=config.COLOR_NEON_CYAN,
+            bg=config.COLOR_BG_VOID
         )
-        self.btn_add.pack(pady=5)
-
-        # --- 4. FILE QUEUE ---
-        queue_frame = tk.Frame(self.content_frame, bg=COLOR_BG)
-        queue_frame.pack(fill=tk.BOTH, expand=True, padx=40, pady=20)
-
-        tk.Label(queue_frame, text="QUEUED DATASETS:", 
-                 font=(config.FONT_FAMILY, 10, "bold"), 
-                 bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", pady=(0, 5))
-
-        # Inner list container (Non-scrollable, just a stack since outer page scrolls)
-        self.file_list_frame = tk.Frame(queue_frame, bg=COLOR_BG)
-        self.file_list_frame.pack(fill=tk.BOTH, expand=True)
+        title.pack()
         
-        # Empty State
-        self.empty_msg = tk.Label(self.file_list_frame, text="NO DATA LOADED // WAITING FOR INPUT", 
-                                  bg=COLOR_BG, fg="#334155", font=(config.FONT_FAMILY, 12, "bold"))
-        self.empty_msg.pack(pady=40)
-
-        # --- 5. ACTION FOOTER ---
-        footer = tk.Frame(self.content_frame, bg=COLOR_BG)
-        footer.pack(fill=tk.X, padx=40, pady=30)
+        subtitle = tk.Label(
+            title_frame,
+            text="MULTI-FILE NEURAL ANALYSIS SYSTEM",
+            font=(config.FONT_FAMILY, 10),
+            fg=config.COLOR_TEXT_SECONDARY,
+            bg=config.COLOR_BG_VOID
+        )
+        subtitle.pack()
+    
+    def _create_file_zone(self, parent):
+        """Create file selection zone"""
+        # Container with neon border
+        zone_container = tk.Frame(parent, bg=config.COLOR_BG_VOID)
+        zone_container.pack(fill=tk.BOTH, expand=True, pady=10, padx=20)
+        
+        # Header bar
+        header_bar = tk.Frame(zone_container, bg=config.COLOR_BG_CARD, height=50)
+        header_bar.pack(fill=tk.X)
+        header_bar.pack_propagate(False)
+        
+        # Create neon border effect
+        border_canvas = tk.Canvas(
+            header_bar,
+            height=50,
+            bg=config.COLOR_BG_CARD,
+            highlightthickness=0
+        )
+        border_canvas.pack(fill=tk.BOTH, expand=True)
+        
+        # Draw top border
+        border_canvas.create_line(
+            0, 0, 1200, 0,
+            fill=config.COLOR_NEON_CYAN,
+            width=2
+        )
+        
+        # FIX: Replaced alpha fill with stipple
+        border_canvas.create_line(
+            0, 0, 1200, 0,
+            fill=config.COLOR_NEON_CYAN,
+            stipple="gray50",
+            width=6
+        )
+        
+        # Header text
+        border_canvas.create_text(
+            20, 25,
+            text="📂 FILE QUEUE",
+            anchor="w",
+            font=(config.FONT_FAMILY, 12, "bold"),
+            fill=config.COLOR_NEON_CYAN
+        )
         
         # Stats
-        self.stats_label = tk.Label(footer, text="READY TO PROCESS", 
-                                    font=(config.FONT_FAMILY, 12), bg=COLOR_BG, fg=COLOR_TEXT_MUTED)
-        self.stats_label.pack(side=tk.LEFT)
+        self.stats_text = border_canvas.create_text(
+            1100, 25,
+            text="0 FILES",
+            anchor="e",
+            font=(config.FONT_FAMILY, 10),
+            fill=config.COLOR_TEXT_SECONDARY
+        )
         
-        # Clear Button
-        self.clear_btn = tk.Button(footer, text="CLEAR QUEUE", 
-                                   command=self._clear_files,
-                                   bg=COLOR_BG, fg=COLOR_DANGER, bd=0, 
-                                   font=(config.FONT_FAMILY, 10, "bold"), cursor="hand2")
-        self.clear_btn.pack(side=tk.LEFT, padx=20)
+        # File list with scrollbar
+        list_container = tk.Frame(zone_container, bg=config.COLOR_BG_CARD)
+        list_container.pack(fill=tk.BOTH, expand=True)
+        
+        # Canvas for scrolling
+        self.file_canvas = tk.Canvas(
+            list_container,
+            bg=config.COLOR_BG_CARD,
+            highlightthickness=0,
+            height=300
+        )
+        self.file_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        # Scrollbar (neon styled)
+        scrollbar = tk.Scrollbar(
+            list_container,
+            orient=tk.VERTICAL,
+            command=self.file_canvas.yview,
+            bg=config.COLOR_BG_ELEVATED,
+            troughcolor=config.COLOR_BG_CARD,
+            activebackground=config.COLOR_NEON_CYAN
+        )
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.file_canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Frame inside canvas
+        self.file_list_frame = tk.Frame(self.file_canvas, bg=config.COLOR_BG_CARD)
+        self.file_canvas_window = self.file_canvas.create_window(
+            (0, 0),
+            window=self.file_list_frame,
+            anchor="nw"
+        )
+        
+        # Update scroll region when frame changes
+        self.file_list_frame.bind(
+            "<Configure>",
+            lambda e: self.file_canvas.configure(scrollregion=self.file_canvas.bbox("all"))
+        )
+        
+        # Resize internal window to canvas width
+        self.file_canvas.bind(
+            "<Configure>",
+            lambda e: self.file_canvas.itemconfig(self.file_canvas_window, width=e.width)
+        )
 
-        # Execute Button
-        self.process_btn = CyberButton(
-            footer, text="INITIATE ANALYSIS", 
+        # Empty state
+        self.empty_label = tk.Label(
+            self.file_list_frame,
+            text="⚡ NO FILES LOADED ⚡\n\nCLICK 'ADD FILES' TO BEGIN ANALYSIS",
+            font=(config.FONT_FAMILY, 12),
+            fg=config.COLOR_TEXT_MUTED,
+            bg=config.COLOR_BG_CARD,
+            justify=tk.CENTER,
+            pady=80
+        )
+        self.empty_label.pack(fill=tk.BOTH, expand=True)
+        
+        # Bottom border
+        bottom_border = tk.Canvas(
+            zone_container,
+            height=2,
+            bg=config.COLOR_BG_CARD,
+            highlightthickness=0
+        )
+        bottom_border.pack(fill=tk.X)
+        bottom_border.create_line(
+            0, 0, 1200, 0,
+            fill=config.COLOR_NEON_PINK,
+            width=2
+        )
+        
+        # Button row
+        btn_row = tk.Frame(zone_container, bg=config.COLOR_BG_CARD, height=70)
+        btn_row.pack(fill=tk.X)
+        btn_row.pack_propagate(False)
+        
+        btn_container = tk.Frame(btn_row, bg=config.COLOR_BG_CARD)
+        btn_container.pack(pady=10)
+        
+        self.add_btn = NeonButton(
+            btn_container,
+            text="ADD FILES",
+            command=self._add_files,
+            neon_color=config.COLOR_NEON_CYAN,
+            width=160,
+            icon="+"
+        )
+        self.add_btn.pack(side=tk.LEFT, padx=5)
+        
+        self.clear_btn = NeonButton(
+            btn_container,
+            text="CLEAR ALL",
+            command=self._clear_files,
+            neon_color=config.COLOR_NEON_ORANGE,
+            width=160,
+            icon="✕"
+        )
+        self.clear_btn.pack(side=tk.LEFT, padx=5)
+    
+    def _create_progress_section(self, parent):
+        """Create progress display section"""
+        self.progress_container = tk.Frame(parent, bg=config.COLOR_BG_VOID)
+        
+        # Status message
+        self.status_label = tk.Label(
+            self.progress_container,
+            text="",
+            font=(config.FONT_FAMILY, 11),
+            fg=config.COLOR_TEXT_SECONDARY,
+            bg=config.COLOR_BG_VOID
+        )
+        self.status_label.pack(pady=(10, 5))
+        
+        # Progress bar
+        self.progress_bar = CyberProgressBar(
+            self.progress_container,
+            width=800,
+            height=35
+        )
+    
+    def _create_action_section(self, parent):
+        """Create main action button"""
+        action_frame = tk.Frame(parent, bg=config.COLOR_BG_VOID)
+        action_frame.pack(pady=30)
+        
+        self.process_btn = NeonButton(
+            action_frame,
+            text="INITIATE ANALYSIS",
             command=self._process_files,
-            width=300, height=60,
-            bg_color=COLOR_SUCCESS,
-            icon="▶"
+            neon_color=config.COLOR_NEON_PINK,
+            width=320,
+            height=60,
+            icon="⚡"
         )
-        self.process_btn.pack(side=tk.RIGHT)
-
-        # Progress Bar
-        self.progress_bar = ttk.Progressbar(self.content_frame, orient="horizontal", mode="determinate")
-
+        self.process_btn.pack()
+    
     def _add_files(self):
-        if self.is_processing: return
-        file_paths = filedialog.askopenfilenames(
-            title="Select Sensor Logs", filetypes=[("CSV Files", "*.csv")]
-        )
-        if not file_paths: return
+        """Add files to queue"""
+        if self.is_processing:
+            return
         
+        file_paths = filedialog.askopenfilenames(
+            title="SELECT SENSOR DATA FILES",
+            filetypes=[("CSV Files", "*.csv"), ("All Files", "*.*")]
+        )
+        
+        if not file_paths:
+            return
+        
+        # Add files (avoid duplicates)
+        new_files = [Path(p) for p in file_paths]
         existing = {str(p.resolve()) for p in self.selected_files}
-        for p in file_paths:
-            path_obj = Path(p)
-            if str(path_obj.resolve()) not in existing:
-                self.selected_files.append(path_obj)
+        
+        for p in new_files:
+            try:
+                rp = str(p.resolve())
+            except Exception:
+                rp = str(p)
+            if rp not in existing:
+                self.selected_files.append(p)
+                existing.add(rp)
         
         self._update_file_list()
-
-    def _update_file_list(self):
-        for w in self.file_list_frame.winfo_children(): w.destroy()
-        
-        if not self.selected_files:
-            self.empty_msg = tk.Label(self.file_list_frame, text="NO DATA LOADED // WAITING FOR INPUT", 
-                                      bg=COLOR_BG, fg="#334155", font=(config.FONT_FAMILY, 12, "bold"))
-            self.empty_msg.pack(pady=40)
-            self.stats_label.config(text="READY TO PROCESS")
-            return
-
-        for i, f in enumerate(self.selected_files):
-            card = tk.Frame(self.file_list_frame, bg=COLOR_CARD, pady=10, padx=15)
-            card.pack(fill=tk.X, pady=2)
-            
-            tk.Label(card, text="📄", bg=COLOR_CARD, fg="white", font=("Arial", 14)).pack(side=tk.LEFT)
-            
-            info_frame = tk.Frame(card, bg=COLOR_CARD)
-            info_frame.pack(side=tk.LEFT, padx=15)
-            tk.Label(info_frame, text=f.name, bg=COLOR_CARD, fg="white", font=(config.FONT_FAMILY, 10, "bold")).pack(anchor="w")
-            try:
-                size_txt = f"{f.stat().st_size / 1024:.1f} KB"
-            except:
-                size_txt = "Unknown Size"
-            tk.Label(info_frame, text=size_txt, bg=COLOR_CARD, fg=COLOR_TEXT_MUTED, font=(config.FONT_FAMILY, 8)).pack(anchor="w")
-            
-            tk.Label(card, text="QUEUED", bg=COLOR_CARD, fg=COLOR_ACCENT, font=(config.FONT_FAMILY, 8, "bold")).pack(side=tk.RIGHT)
-
-        total_mb = sum(f.stat().st_size for f in self.selected_files) / (1024*1024)
-        self.stats_label.config(text=f"{len(self.selected_files)} FILES SELECTED ({total_mb:.2f} MB)")
-
+    
     def _clear_files(self):
-        if self.is_processing: return
+        """Clear all files"""
+        if self.is_processing:
+            return
+        
         self.selected_files = []
         self._update_file_list()
-
-    def _process_files(self):
+    
+    def _update_file_list(self):
+        """Update the file list display"""
+        # Clear existing
+        for widget in self.file_list_frame.winfo_children():
+            widget.destroy()
+        
         if not self.selected_files:
-            messagebox.showwarning("No Data", "Please inject data files first.")
+            # Show empty state
+            self.empty_label = tk.Label(
+                self.file_list_frame,
+                text="⚡ NO FILES LOADED ⚡\n\nCLICK 'ADD FILES' TO BEGIN ANALYSIS",
+                font=(config.FONT_FAMILY, 12),
+                fg=config.COLOR_TEXT_MUTED,
+                bg=config.COLOR_BG_CARD,
+                justify=tk.CENTER,
+                pady=80
+            )
+            self.empty_label.pack(fill=tk.BOTH, expand=True)
+            
+            # Update stats (using canvas)
+            self.file_canvas.itemconfig(self.stats_text, text="0 FILES")
+        else:
+            # Show file cards
+            for file_path in self.selected_files:
+                card = FileCard(
+                    self.file_list_frame,
+                    file_path,
+                    on_remove=self._remove_file
+                )
+                card.pack(fill=tk.X, padx=10, pady=2)
+            
+            # Update stats
+            total_size = sum(f.stat().st_size for f in self.selected_files) / (1024 * 1024)
+            stats_text = f"{len(self.selected_files)} FILES • {total_size:.1f} MB"
+            self.file_canvas.itemconfig(self.stats_text, text=stats_text)
+    
+    def _remove_file(self, file_path: Path):
+        """Remove a file from the list"""
+        if self.is_processing:
             return
         
+        self.selected_files = [f for f in self.selected_files if f != file_path]
+        self._update_file_list()
+    
+    def _process_files(self):
+        """Process all files"""
+        if self.is_processing:
+            return
+        
+        if not self.selected_files:
+            messagebox.showerror(
+                "NO FILES",
+                "Please add at least one file to the queue!"
+            )
+            return
+        
+        # Start processing
         self.is_processing = True
         self.process_btn.set_disabled(True)
-        self.switch_btn.set_disabled(True)
-        self.btn_add.config(state="disabled")
-        self.clear_btn.config(state="disabled")
+        self.add_btn.set_disabled(True)
+        self.clear_btn.set_disabled(True)
         
-        self.progress_bar.pack(fill=tk.X, side=tk.BOTTOM, pady=10)
-        self.progress_bar.start(10)
+        # Show progress
+        self.progress_container.pack(before=self.process_btn.master, pady=20)
         
-        thread = threading.Thread(target=self._run_process, daemon=True)
+        # Start in thread
+        thread = threading.Thread(target=self._process_thread, daemon=True)
         thread.start()
-
-    def _run_process(self):
+    
+    def _process_thread(self):
+        """Process files in background"""
         try:
-            data = self.controller.process_batch_files([str(f) for f in self.selected_files])
-            self.after(0, lambda: self._finish_process(data))
+            def progress_callback(progress, message):
+                self.after(0, lambda: self._update_progress(progress, message))
+            
+            # Process
+            prediction_data = self.controller.process_batch_files(
+                [str(f) for f in self.selected_files],
+                progress_callback=progress_callback
+            )
+            
+            # Complete
+            self.after(0, lambda: self._on_complete(prediction_data))
+            
         except Exception as e:
-            self.after(0, lambda: self._error_process(str(e)))
-
-    def _finish_process(self, data):
-        self.progress_bar.stop()
-        self.progress_bar.pack_forget()
+            self.after(0, lambda: self._on_error(str(e)))
+    
+    def _update_progress(self, progress: float, message: str):
+        """Update progress display"""
+        self.progress_bar.set_progress(progress)
+        self.status_label.config(text=message, fg=config.COLOR_NEON_CYAN)
+    
+    def _on_complete(self, prediction_data):
+        """Handle completion"""
+        self.progress_bar.set_progress(1.0)
+        self.status_label.config(
+            text="✓ ANALYSIS COMPLETE",
+            fg=config.COLOR_NEON_GREEN
+        )
+        
+        self.after(500, lambda: self._navigate_to_results(prediction_data))
+    
+    def _navigate_to_results(self, prediction_data):
+        """Navigate to results"""
+        self.progress_container.pack_forget()
         self.is_processing = False
         self.process_btn.set_disabled(False)
-        self.switch_btn.set_disabled(False)
-        self.btn_add.config(state="normal")
-        self.clear_btn.config(state="normal")
-        self.show_results(data)
-
-    def _error_process(self, msg):
-        self.progress_bar.stop()
-        self.progress_bar.pack_forget()
+        self.add_btn.set_disabled(False)
+        self.clear_btn.set_disabled(False)
+        
+        self.show_results(prediction_data)
+    
+    def _on_error(self, error_msg: str):
+        """Handle error"""
+        self.progress_container.pack_forget()
         self.is_processing = False
         self.process_btn.set_disabled(False)
-        self.switch_btn.set_disabled(False)
-        self.btn_add.config(state="normal")
-        self.clear_btn.config(state="normal")
-        messagebox.showerror("Processing Error", msg)
+        self.add_btn.set_disabled(False)
+        self.clear_btn.set_disabled(False)
+        
+        messagebox.showerror("ERROR", f"Processing failed:\n\n{error_msg}")

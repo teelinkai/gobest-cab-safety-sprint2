@@ -1,6 +1,7 @@
 """
 🗂️ CYNOSURE REAL-TIME TERMINAL 🗂️
 Manual data entry for single trip analysis
+✅ FIXED: Layout centering and top gap issues
 """
 
 import tkinter as tk
@@ -101,7 +102,7 @@ ModernInput = RetroInput
 class CyberRealtimeView(tk.Frame):
     """
     CYNOSURE REAL-TIME TERMINAL
-    Manual data entry interface
+    ✅ FIXED: Layout centering and responsive design
     """
     
     def __init__(self, parent, controller, switch_to_batch: Callable, show_results: Callable):
@@ -115,11 +116,11 @@ class CyberRealtimeView(tk.Frame):
         self._setup_ui()
     
     def _setup_ui(self):
-        """Setup UI"""
+        """Setup UI with FIXED layout"""
         
-        # ===== HEADER =====
+        # ===== HEADER (FIXED: Reduced top padding) =====
         header = tk.Frame(self, bg=config.COLOR_BG_PAPER)
-        header.pack(fill=tk.X, padx=40, pady=(30, 20))
+        header.pack(fill=tk.X, padx=40, pady=(15, 10))  # ✅ Changed from (30, 20) to (15, 10)
 
         # 👁️ BILL CIPHER LOGO
         from .cyber_components import BillCipherLogo
@@ -156,19 +157,29 @@ class CyberRealtimeView(tk.Frame):
         )
         back_btn.pack(side=tk.RIGHT)
         
-        # ===== SCROLLABLE CONTENT =====
+        # ===== SCROLLABLE CONTENT (FIXED: Proper centering) =====
         canvas = tk.Canvas(self, bg=config.COLOR_BG_PAPER, highlightthickness=0)
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
         
         scroll_frame = tk.Frame(canvas, bg=config.COLOR_BG_PAPER)
         
-        scroll_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
+        # ✅ FIX: Bind configure to update scroll region AND width properly
+        def on_frame_configure(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
         
-        window_id = canvas.create_window((0, 0), window=scroll_frame, anchor="n")
-        canvas.bind("<Configure>", lambda e: canvas.itemconfig(window_id, width=e.width))
+        scroll_frame.bind("<Configure>", on_frame_configure)
+        
+        # ✅ FIX: Create window with proper anchor
+        window_id = canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+        
+        # ✅ FIX: Update width on canvas resize to prevent off-centering
+        def on_canvas_configure(event):
+            # Set the scroll_frame width to match canvas width
+            canvas.itemconfig(window_id, width=event.width)
+            # Force update
+            scroll_frame.update_idletasks()
+        
+        canvas.bind("<Configure>", on_canvas_configure)
         canvas.configure(yscrollcommand=scrollbar.set)
         
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -183,7 +194,7 @@ class CyberRealtimeView(tk.Frame):
         
         # ===== CONTENT GRID =====
         content = tk.Frame(scroll_frame, bg=config.COLOR_BG_PAPER)
-        content.pack(fill=tk.BOTH, expand=True, padx=40, pady=20)
+        content.pack(fill=tk.BOTH, expand=True, padx=40, pady=15)  # ✅ Reduced pady from 20 to 15
         
         # Left column
         left_col = tk.Frame(content, bg=config.COLOR_BG_PAPER)
@@ -224,7 +235,7 @@ class CyberRealtimeView(tk.Frame):
         ])
         
         # ===== PREDICT BUTTON =====
-        btn_container = tk.Frame(scroll_frame, bg=config.COLOR_BG_PAPER, pady=40)
+        btn_container = tk.Frame(scroll_frame, bg=config.COLOR_BG_PAPER, pady=30)  # ✅ Reduced from 40 to 30
         btn_container.pack(fill=tk.X)
         
         self.predict_btn = RetroButton(
@@ -235,6 +246,15 @@ class CyberRealtimeView(tk.Frame):
             height=55
         )
         self.predict_btn.pack()
+        
+        # ✅ FIX: Force initial layout update
+        self.after(100, lambda: self._force_layout_update(canvas, scroll_frame, window_id))
+    
+    def _force_layout_update(self, canvas, scroll_frame, window_id):
+        """Force layout update to prevent initial off-centering"""
+        scroll_frame.update_idletasks()
+        canvas.configure(scrollregion=canvas.bbox("all"))
+        canvas.itemconfig(window_id, width=canvas.winfo_width())
     
     def _create_card(self, parent, title, fields):
         """Create input card"""

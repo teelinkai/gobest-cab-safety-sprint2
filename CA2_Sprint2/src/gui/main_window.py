@@ -12,6 +12,7 @@ from .cyber_components import ParticleField, GlitchText
 from .batch_mode_view import CyberBatchView
 from .realtime_mode_view import CyberRealtimeView
 from .results_view import CyberResultsView
+from .history_view import CyberHistoryView  # <--- IMPORT ADDED
 from ..core.mode_controller import ModeController
 
 
@@ -253,7 +254,8 @@ class CyberMainWindow(tk.Tk):
             self.content_frame,
             controller=self.controller,
             switch_to_realtime=lambda: self.show_view("realtime"),
-            show_results=lambda data: self.show_view("results", data)
+            show_results=lambda data: self.show_view("results", data),
+            show_history=lambda: self.show_view("history")  # <--- PASSED TO BATCH
         )
         
         # Realtime Processing View
@@ -270,6 +272,13 @@ class CyberMainWindow(tk.Tk):
             controller=self.controller,
             back_to_batch=lambda: self.show_view("batch"),
             back_to_realtime=lambda: self.show_view("realtime")
+        )
+        
+        # History View (New)
+        self.views["history"] = CyberHistoryView(
+            self.content_frame,
+            controller=self.controller,
+            back_to_main=lambda: self.show_view("batch")
         )
     
     def show_view(self, view_name: str, data=None):
@@ -291,6 +300,10 @@ class CyberMainWindow(tk.Tk):
         # Pass data if needed (for results view)
         if data and hasattr(self.current_view, 'display_results'):
             self.current_view.display_results(data)
+            
+        # Refresh history if showing history
+        if view_name == "history" and hasattr(self.current_view, 'refresh_file_list'):
+            self.current_view.refresh_file_list()
         
         # Animate entrance
         self.current_view.pack(fill=tk.BOTH, expand=True)
@@ -312,13 +325,15 @@ class CyberMainWindow(tk.Tk):
         status_messages = {
             "batch": "◉ BATCH MODE ACTIVE",
             "realtime": "◉ REAL-TIME MODE ACTIVE",
-            "results": "◉ ANALYSIS COMPLETE"
+            "results": "◉ ANALYSIS COMPLETE",
+            "history": "◉ ARCHIVE ACCESS GRANTED"
         }
         
         status_colors = {
             "batch": config.COLOR_NEON_CYAN,
             "realtime": config.COLOR_NEON_PINK,
-            "results": config.COLOR_NEON_GREEN
+            "results": config.COLOR_NEON_GREEN,
+            "history": config.COLOR_NEON_PURPLE
         }
         
         self.status_label.config(

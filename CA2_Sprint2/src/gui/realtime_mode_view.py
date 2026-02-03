@@ -181,8 +181,16 @@ class CyberRealtimeView(tk.Frame):
         canvas.bind("<Configure>", lambda e: canvas.itemconfig(window_id, width=e.width))
         canvas.configure(yscrollcommand=scrollbar.set)
         
+        # Pack only the canvas (Hide scrollbar)
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=0)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        # scrollbar.pack(side=tk.RIGHT, fill=tk.Y) <-- HIDDEN
+        
+        # Mouse scroll binding
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            
+        self.scroll_frame.bind("<Enter>", lambda e: canvas.bind_all("<MouseWheel>", _on_mousewheel))
+        self.scroll_frame.bind("<Leave>", lambda e: canvas.unbind_all("<MouseWheel>"))
 
         # --- BALANCED 2-COLUMN GRID ---
         content_container = tk.Frame(self.scroll_frame, bg=config.COLOR_BG_VOID)

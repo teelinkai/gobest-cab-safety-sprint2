@@ -154,12 +154,13 @@ class CyberBatchView(tk.Frame):
     Multi-file processing with epic neon animations
     """
     
-    def __init__(self, parent, controller, switch_to_realtime: Callable, show_results: Callable):
+    def __init__(self, parent, controller, switch_to_realtime: Callable, show_results: Callable, show_history: Callable):
         super().__init__(parent, bg=config.COLOR_BG_VOID)
         
         self.controller = controller
         self.switch_to_realtime = switch_to_realtime
         self.show_results = show_results
+        self.show_history = show_history
         self.selected_files: List[Path] = []
         self.is_processing = False
         
@@ -186,13 +187,24 @@ class CyberBatchView(tk.Frame):
         self.main_canvas.bind("<Configure>", lambda e: self.main_canvas.itemconfig(self.window_id, width=e.width))
         self.main_canvas.configure(yscrollcommand=self.main_scrollbar.set)
         
-        # Pack everything
+        # Pack only the canvas (Hide the scrollbar visual, but keep functionality)
         self.main_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.main_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Bind MouseWheel for scrolling
+        self.bind_mouse_scroll(self.main_canvas, self.scroll_frame)
         
         # Build the actual UI inside the scroll_frame
         self._setup_ui(self.scroll_frame)
     
+    def bind_mouse_scroll(self, canvas, frame):
+        """Bind mouse wheel events to canvas"""
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        
+        # Bind when hovering over the frame
+        frame.bind("<Enter>", lambda e: canvas.bind_all("<MouseWheel>", _on_mousewheel))
+        frame.bind("<Leave>", lambda e: canvas.unbind_all("<MouseWheel>"))
+
     def _setup_ui(self, parent):
         """Setup the epic UI inside the scrollable frame"""
         # Header section
@@ -212,21 +224,37 @@ class CyberBatchView(tk.Frame):
         header = tk.Frame(parent, bg=config.COLOR_BG_VOID)
         header.pack(fill=tk.X, pady=(0, 20))
         
+        # Button Container
+        btn_frame = tk.Frame(header, bg=config.COLOR_BG_VOID)
+        btn_frame.pack(side=tk.LEFT)
+        
         # Mode switcher button
         mode_btn = NeonButton(
-            header,
+            btn_frame,
             text="REAL-TIME MODE",
             command=self.switch_to_realtime,
             neon_color=config.COLOR_NEON_PINK,
-            width=200,
+            width=180,
             height=45,
             icon="🔴"
         )
-        mode_btn.pack(side=tk.LEFT)
+        mode_btn.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # History Button (NEW)
+        history_btn = NeonButton(
+            btn_frame,
+            text="HISTORY",
+            command=self.show_history,
+            neon_color=config.COLOR_NEON_PURPLE,
+            width=140,
+            height=45,
+            icon="📂"
+        )
+        history_btn.pack(side=tk.LEFT)
         
         # Title
         title_frame = tk.Frame(header, bg=config.COLOR_BG_VOID)
-        title_frame.pack(side=tk.LEFT, expand=True)
+        title_frame.pack(side=tk.RIGHT, expand=True)
         
         title = tk.Label(
             title_frame,
@@ -235,7 +263,7 @@ class CyberBatchView(tk.Frame):
             fg=config.COLOR_NEON_CYAN,
             bg=config.COLOR_BG_VOID
         )
-        title.pack()
+        title.pack(anchor="e")
         
         subtitle = tk.Label(
             title_frame,
@@ -244,7 +272,7 @@ class CyberBatchView(tk.Frame):
             fg=config.COLOR_TEXT_SECONDARY,
             bg=config.COLOR_BG_VOID
         )
-        subtitle.pack()
+        subtitle.pack(anchor="e")
     
     def _create_file_zone(self, parent):
         """Create file selection zone"""
@@ -273,7 +301,7 @@ class CyberBatchView(tk.Frame):
             width=2
         )
         
-        # FIX: Replaced alpha fill with stipple
+        # Stipple effect
         border_canvas.create_line(
             0, 0, 1200, 0,
             fill=config.COLOR_NEON_CYAN,
@@ -312,16 +340,12 @@ class CyberBatchView(tk.Frame):
         )
         self.file_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        # Scrollbar (neon styled)
+        # Internal scrollbar for file list (Removed visual, kept logic)
         scrollbar = tk.Scrollbar(
             list_container,
             orient=tk.VERTICAL,
-            command=self.file_canvas.yview,
-            bg=config.COLOR_BG_ELEVATED,
-            troughcolor=config.COLOR_BG_CARD,
-            activebackground=config.COLOR_NEON_CYAN
+            command=self.file_canvas.yview
         )
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.file_canvas.configure(yscrollcommand=scrollbar.set)
         
@@ -344,6 +368,9 @@ class CyberBatchView(tk.Frame):
             "<Configure>",
             lambda e: self.file_canvas.itemconfig(self.file_canvas_window, width=e.width)
         )
+        
+        # Mouse scroll for file list
+        self.bind_mouse_scroll(self.file_canvas, self.file_list_frame)
 
         # Empty state
         self.empty_label = tk.Label(

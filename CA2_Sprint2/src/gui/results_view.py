@@ -4,7 +4,7 @@ Epic data visualization with neon charts and export functionality
 """
 
 import tkinter as tk
-from tkinter import messagebox, filedialog
+from tkinter import messagebox, filedialog, ttk
 from typing import Callable
 from datetime import datetime
 from pathlib import Path
@@ -16,7 +16,7 @@ from .cyber_components import NeonButton, CyberCard
 class CyberResultsView(tk.Frame):
     """
     🌟 CYBERPUNK RESULTS DISPLAY 🌟
-    Beautiful visualization of prediction results
+    Beautiful visualization of prediction results (Now Scrollable!)
     """
     
     def __init__(self, parent, controller, back_to_batch: Callable, back_to_realtime: Callable):
@@ -27,23 +27,65 @@ class CyberResultsView(tk.Frame):
         self.back_to_realtime = back_to_realtime
         self.current_data = None
         
-        self._create_ui()
+        # Setup the scrollable wrapper immediately
+        self._setup_main_scroll()
     
-    def _create_ui(self):
-        """Create results UI"""
+    def _setup_main_scroll(self):
+        """Setup the main scrollable area"""
+        # 1. Create Canvas & Scrollbar
+        self.main_canvas = tk.Canvas(self, bg=config.COLOR_BG_VOID, highlightthickness=0)
+        self.main_scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.main_canvas.yview)
+        
+        # 2. Create the Frame that will hold all the content
+        self.scroll_frame = tk.Frame(self.main_canvas, bg=config.COLOR_BG_VOID)
+        
+        # 3. Configure Scrolling Logic
+        self.scroll_frame.bind(
+            "<Configure>",
+            lambda e: self.main_canvas.configure(scrollregion=self.main_canvas.bbox("all"))
+        )
+        
+        # 4. Create the window inside the canvas
+        self.window_id = self.main_canvas.create_window((0, 0), window=self.scroll_frame, anchor="nw")
+        
+        # 5. Ensure the inner frame expands to fill the width of the canvas
+        self.main_canvas.bind(
+            "<Configure>",
+            lambda e: self.main_canvas.itemconfig(self.window_id, width=e.width)
+        )
+        
+        # 6. Link scrollbar to canvas
+        self.main_canvas.configure(yscrollcommand=self.main_scrollbar.set)
+        
+        # 7. Pack the scroll components (Hide Scrollbar)
+        self.main_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # self.main_scrollbar.pack(side=tk.RIGHT, fill=tk.Y) <-- HIDDEN
+        
+        # 8. Mouse Scroll Binding
+        def _on_mousewheel(event):
+            self.main_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            
+        self.scroll_frame.bind("<Enter>", lambda e: self.main_canvas.bind_all("<MouseWheel>", _on_mousewheel))
+        self.scroll_frame.bind("<Leave>", lambda e: self.main_canvas.unbind_all("<MouseWheel>"))
+        
+        # 9. Build the actual UI inside the scroll_frame
+        self._create_ui(self.scroll_frame)
+    
+    def _create_ui(self, parent):
+        """Create results UI elements inside the parent frame"""
         # Header
-        self._create_header()
+        self._create_header(parent)
         
         # Stats container
-        self.stats_container = tk.Frame(self, bg=config.COLOR_BG_VOID)
+        self.stats_container = tk.Frame(parent, bg=config.COLOR_BG_VOID)
         self.stats_container.pack(fill=tk.BOTH, expand=True, pady=20)
         
         # Action buttons
-        self._create_action_buttons()
+        self._create_action_buttons(parent)
     
-    def _create_header(self):
+    def _create_header(self, parent):
         """Create header section"""
-        header = tk.Frame(self, bg=config.COLOR_BG_VOID)
+        header = tk.Frame(parent, bg=config.COLOR_BG_VOID)
         header.pack(fill=tk.X, pady=(0, 30))
         
         tk.Label(
@@ -62,10 +104,10 @@ class CyberResultsView(tk.Frame):
             bg=config.COLOR_BG_VOID
         ).pack()
     
-    def _create_action_buttons(self):
+    def _create_action_buttons(self, parent):
         """Create action buttons"""
-        btn_frame = tk.Frame(self, bg=config.COLOR_BG_VOID)
-        btn_frame.pack(pady=20)
+        btn_frame = tk.Frame(parent, bg=config.COLOR_BG_VOID)
+        btn_frame.pack(pady=40)  # Added extra padding at bottom
         
         self.export_btn = NeonButton(
             btn_frame,
@@ -93,7 +135,7 @@ class CyberResultsView(tk.Frame):
         """Display prediction results"""
         self.current_data = prediction_data
         
-        # Clear previous
+        # Clear previous stats
         for widget in self.stats_container.winfo_children():
             widget.destroy()
         
@@ -160,6 +202,9 @@ class CyberResultsView(tk.Frame):
             config.COLOR_NEON_GREEN,
             "🛡"
         ).pack(side=tk.LEFT, padx=15)
+        
+        # Reset scroll to top
+        self.main_canvas.yview_moveto(0)
     
     def _create_stat_card(self, parent, label: str, value: str, color: str, icon: str):
         """Create a stat display card"""
@@ -190,13 +235,13 @@ class CyberResultsView(tk.Frame):
             width=2
         )
         
-        # Glow effect (Fixed transparency crash)
+        # Glow effect (Stippled to prevent crash)
         for i in range(3):
             self._draw_rounded_rect(
                 card, 3-i, 3-i, 247+i, 117+i, 12,
                 fill="",
                 outline=color,
-                stipple="gray25",  # Use stipple instead of hex alpha
+                stipple="gray25",
                 width=1
             )
         

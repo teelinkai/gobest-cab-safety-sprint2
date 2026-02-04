@@ -280,3 +280,67 @@ class ModeController:
     def get_model_info(self) -> Dict:
         """Get information about the loaded model"""
         return self.predictor.model_info()
+    
+    def generate_driver_risk_report(self, mapping_file_path: str) -> pd.DataFrame:
+        """
+        Generates a per-driver risk report by merging prediction results 
+        with an uploaded ID mapping file.
+        """
+        # 1. Validation
+        if not self.current_prediction or 'results_df' not in self.current_prediction:
+            raise ValueError("No prediction results available to map.")
+            
+        # 2. Load the mapping file (bookingID, driver_id)
+        # We read specifically columns 0 and 1 to be safe, or by name if standard
+        try:
+            mapping_df = pd.read_csv(mapping_file_path)
+            # Normalize column names for easier merging
+            mapping_df.columns = [c.strip() for c in mapping_df.columns]
+            
+            # Identify the driver column (handle 'driver_id', 'driverID', etc.)
+            driver_col = next((c for c in mapping_df.columns if 'driver' in c.lower()), 'driver_id')
+            booking_col = next((c for c in mapping_df.columns if 'booking' in c.lower()), 'bookingID')
+            
+        except Exception as e:
+            raise ValueError(f"Could not read mapping file: {str(e)}")
+
+        # 3. Get current prediction results
+        results_df = self.current_prediction['results_df'].copy()
+        
+        # 4. Data Type Safety (Ensure bookingIDs are strings for merging)
+        results_df['bookingID'] = results_df['bookingID'].astype(str)
+        mapping_df[booking_col] = mapping_df[booking_col].astype(str)
+        
+        # 5. Merge Data
+        merged_df = pd.merge(
+            results_df, 
+            mapping_df[[booking_col, driver_col]], 
+            left_on='bookingID', 
+            right_on=booking_col, 
+            how='inner'
+        )
+        
+        if merged_df.empty:
+            raise ValueError("No matching bookingIDs found between results and mapping file.")
+
+        # 6. Group by Driver and Calculate Stats
+        driver_stats = merged_df.groupby(driver_col).agg(
+            total_trips=('prediction', 'count'),
+            dangerous_trips=('prediction', lambda x: (x == 1).sum()),
+            safe_trips=('prediction', lambda x: (x == 0).sum()),
+            avg_confidence=('confidence', 'mean')
+        ).reset_index()
+        
+        # 7. Calculate Risk Percentage
+        driver_stats['risk_score_pct'] = (driver_stats['dangerous_trips'] / driver_stats['total_trips']) * 100
+        
+        # 8. Sort: Most dangerous drivers at the top (by count, then by %)
+        driver_stats = driver_stats.sort_values(
+            by=['dangerous_trips', 'risk_score_pct'], 
+            ascending=[False, False]
+        )
+        
+        # Rename driver column for the final report
+        driver_stats = driver_stats.rename(columns={driver_col: 'Driver ID'})
+        
+        return driver_stats

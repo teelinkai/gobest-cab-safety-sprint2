@@ -109,30 +109,40 @@ class CyberResultsView(tk.Frame):
     
     def _create_action_buttons(self, parent, is_realtime: bool):
         """Dynamically create action buttons based on mode"""
-        # Clear existing button frame if it exists to avoid duplicates
         if hasattr(self, 'btn_frame'):
             self.btn_frame.destroy()
             
         self.btn_frame = tk.Frame(parent, bg=config.COLOR_BG_PAPER)
         self.btn_frame.pack(pady=40)
         
-        # Only show export button if it is NOT real-time mode
+        # === BATCH MODE ACTIONS ===
         if not is_realtime:
+            # 1. Export Raw Results
             self.export_btn = RetroButton(
                 self.btn_frame,
                 text="💾 EXPORT RESULTS",
                 command=self._export_results,
-                width=180,
+                width=160,
                 height=50
             )
             self.export_btn.pack(side=tk.LEFT, padx=10)
+
+            # 2. NEW BUTTON: Upload Driver Mapping
+            self.map_btn = RetroButton(
+                self.btn_frame,
+                text="📂 MAP DRIVER IDs",
+                command=self._handle_driver_mapping,  # Link to new function
+                width=160,
+                height=50
+            )
+            self.map_btn.pack(side=tk.LEFT, padx=10)
         
-        # Back button: Routes to batch or realtime view based on origin
+        # === COMMON ACTIONS ===
         self.back_btn = RetroButton(
             self.btn_frame,
             text="← NEW ANALYSIS",
             command=self.back_to_realtime if is_realtime else self.back_to_batch,
-            width=180,
+            width=160,
             height=50
         )
         self.back_btn.pack(side=tk.LEFT, padx=10)
@@ -286,3 +296,55 @@ class CyberResultsView(tk.Frame):
                 "EXPORT ERROR",
                 f"Failed to export results:\n\n{str(e)}"
             )
+    def _handle_driver_mapping(self):
+        """Handle the upload of driver mapping file and report generation"""
+        if not self.current_data:
+            return
+
+        # 1. Ask user for the mapping file (e.g., safety_status_dataset.csv)
+        mapping_path = filedialog.askopenfilename(
+            title="Select Driver ID Mapping File",
+            filetypes=[("CSV Files", "*.csv"), ("All Files", "*.*")]
+        )
+        
+        if not mapping_path:
+            return
+            
+        try:
+            # 2. Generate the report via Controller
+            driver_report = self.controller.generate_driver_risk_report(mapping_path)
+            
+            # 3. Summary Popup
+            n_drivers = len(driver_report)
+            n_risky = len(driver_report[driver_report['dangerous_trips'] > 0])
+            top_risk = driver_report.iloc[0] if n_drivers > 0 else None
+            
+            summary_msg = (
+                f"✅ MAPPING COMPLETE\n\n"
+                f"• Drivers Identified: {n_drivers}\n"
+                f"• Drivers with Flags: {n_risky}\n"
+            )
+            
+            if top_risk is not None and top_risk['dangerous_trips'] > 0:
+                summary_msg += (
+                    f"\n⚠ HIGHEST RISK DRIVER:\n"
+                    f"ID: {top_risk['Driver ID']}\n"
+                    f"Flags: {top_risk['dangerous_trips']} trips ({top_risk['risk_score_pct']:.1f}%)"
+                )
+            
+            messagebox.showinfo("Driver Analysis", summary_msg)
+            
+            # 4. Save the new report
+            save_path = filedialog.asksaveasfilename(
+                title="SAVE DRIVER RISK REPORT",
+                defaultextension=".csv",
+                initialfile="Driver_Risk_Profile.csv",
+                filetypes=[("CSV Files", "*.csv")]
+            )
+            
+            if save_path:
+                driver_report.to_csv(save_path, index=False)
+                messagebox.showinfo("Success", f"Report saved to:\n{Path(save_path).name}")
+                
+        except Exception as e:
+            messagebox.showerror("Mapping Error", f"Failed to generate report:\n\n{str(e)}")

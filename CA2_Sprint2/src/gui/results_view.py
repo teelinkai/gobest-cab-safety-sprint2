@@ -72,7 +72,8 @@ class CyberResultsView(tk.Frame):
         self.stats_container.pack(fill=tk.BOTH, expand=True, pady=20)
         
         # Action buttons
-        self._create_action_buttons(parent)
+        # FIX: Pass is_realtime=False as the default for the initial empty state
+        self._create_action_buttons(parent, is_realtime=False)
     
     def _create_header(self, parent):
         header = tk.Frame(parent, bg=config.COLOR_BG_PAPER)
@@ -106,102 +107,111 @@ class CyberResultsView(tk.Frame):
             bg=config.COLOR_BG_PAPER
         ).pack()
     
-    def _create_action_buttons(self, parent):
-        """Create action buttons"""
-        btn_frame = tk.Frame(parent, bg=config.COLOR_BG_PAPER)
-        btn_frame.pack(pady=40)
+    def _create_action_buttons(self, parent, is_realtime: bool):
+        """Dynamically create action buttons based on mode"""
+        # Clear existing button frame if it exists to avoid duplicates
+        if hasattr(self, 'btn_frame'):
+            self.btn_frame.destroy()
+            
+        self.btn_frame = tk.Frame(parent, bg=config.COLOR_BG_PAPER)
+        self.btn_frame.pack(pady=40)
         
-        self.export_btn = RetroButton(
-            btn_frame,
-            text="💾 EXPORT RESULTS",
-            command=self._export_results,
-            width=180,
-            height=50
-        )
-        self.export_btn.pack(side=tk.LEFT, padx=10)
+        # Only show export button if it is NOT real-time mode
+        if not is_realtime:
+            self.export_btn = RetroButton(
+                self.btn_frame,
+                text="💾 EXPORT RESULTS",
+                command=self._export_results,
+                width=180,
+                height=50
+            )
+            self.export_btn.pack(side=tk.LEFT, padx=10)
         
+        # Back button: Routes to batch or realtime view based on origin
         self.back_btn = RetroButton(
-            btn_frame,
+            self.btn_frame,
             text="← NEW ANALYSIS",
-            command=self.back_to_batch,
+            command=self.back_to_realtime if is_realtime else self.back_to_batch,
             width=180,
             height=50
         )
         self.back_btn.pack(side=tk.LEFT, padx=10)
     
     def display_results(self, prediction_data: dict):
-        """Display results"""
+        """Display results with adaptive layout and dynamic buttons"""
         self.current_data = prediction_data
         
         # Clear previous stats
         for widget in self.stats_container.winfo_children():
             widget.destroy()
         
-        # Create stats grid
+        is_realtime = prediction_data.get('mode') == 'realtime'
+        
+        # Create central container
         grid = tk.Frame(self.stats_container, bg=config.COLOR_BG_PAPER)
         grid.pack(expand=True)
+
+        if is_realtime:
+            # === REAL-TIME MODE LAYOUT ===
+            prediction = prediction_data.get('prediction', 'UNKNOWN')
+            confidence = prediction_data.get('confidence', 0.0)
+            is_danger = prediction == 'DANGEROUS'
+            status_color = config.COLOR_DANGER if is_danger else config.COLOR_SUCCESS
+            status_icon = "⚠" if is_danger else "✓"
+
+            status_row = tk.Frame(grid, bg=config.COLOR_BG_PAPER)
+            status_row.pack(pady=20)
+            
+            self._create_stat_card(
+                status_row,
+                "FINAL SAFETY VERDICT",
+                prediction,
+                status_color,
+                status_icon
+            ).pack(padx=15)
+
+            metrics_row = tk.Frame(grid, bg=config.COLOR_BG_PAPER)
+            metrics_row.pack(pady=15)
+
+            self._create_stat_card(
+                metrics_row,
+                "ANALYSIS MODE",
+                "REAL-TIME SCAN",
+                config.COLOR_ACCENT_PURPLE,
+                "⚡"
+            ).pack(side=tk.LEFT, padx=15)
+
+            self._create_stat_card(
+                metrics_row,
+                "MODEL CONFIDENCE",
+                f"{confidence:.1%}",
+                config.COLOR_ACCENT_ORANGE,
+                "🎯"
+            ).pack(side=tk.LEFT, padx=15)
+
+        else:
+            # === BATCH MODE LAYOUT ===
+            top_row = tk.Frame(grid, bg=config.COLOR_BG_PAPER)
+            top_row.pack(pady=15)
+            
+            self._create_stat_card(top_row, "TOTAL TRIPS", str(prediction_data['total_trips']), config.COLOR_ACCENT_BLUE, "📊").pack(side=tk.LEFT, padx=15)
+            self._create_stat_card(top_row, "FILES PROCESSED", str(prediction_data.get('num_files', 1)), config.COLOR_ACCENT_PURPLE, "📄").pack(side=tk.LEFT, padx=15)
+            
+            bottom_row = tk.Frame(grid, bg=config.COLOR_BG_PAPER)
+            bottom_row.pack(pady=15)
+            
+            self._create_stat_card(bottom_row, "DANGEROUS", f"{prediction_data['dangerous_count']} ({prediction_data['dangerous_pct']:.1f}%)", config.COLOR_DANGER, "⚠").pack(side=tk.LEFT, padx=15)
+            self._create_stat_card(bottom_row, "SAFE", f"{prediction_data['safe_count']} ({prediction_data['safe_pct']:.1f}%)", config.COLOR_SUCCESS, "✓").pack(side=tk.LEFT, padx=15)
+            
+            conf_row = tk.Frame(grid, bg=config.COLOR_BG_PAPER)
+            conf_row.pack(pady=15)
+            
+            self._create_stat_card(conf_row, "AVG CONFIDENCE (D)", f"{prediction_data['avg_confidence_dangerous']:.1%}", config.COLOR_ACCENT_ORANGE, "🎯").pack(side=tk.LEFT, padx=15)
+            self._create_stat_card(conf_row, "AVG CONFIDENCE (S)", f"{prediction_data['avg_confidence_safe']:.1%}", config.COLOR_ACCENT_GREEN, "🛡").pack(side=tk.LEFT, padx=15)
         
-        # Top row
-        top_row = tk.Frame(grid, bg=config.COLOR_BG_PAPER)
-        top_row.pack(pady=15)
+        # Dynamically rebuild the buttons based on the current mode
+        self._create_action_buttons(self.scroll_frame, is_realtime)
         
-        self._create_stat_card(
-            top_row,
-            "TOTAL TRIPS",
-            str(prediction_data['total_trips']),
-            config.COLOR_ACCENT_BLUE,
-            "📊"
-        ).pack(side=tk.LEFT, padx=15)
-        
-        self._create_stat_card(
-            top_row,
-            "FILES PROCESSED",
-            str(prediction_data.get('num_files', 1)),
-            config.COLOR_ACCENT_PURPLE,
-            "📄"
-        ).pack(side=tk.LEFT, padx=15)
-        
-        # Bottom row
-        bottom_row = tk.Frame(grid, bg=config.COLOR_BG_PAPER)
-        bottom_row.pack(pady=15)
-        
-        self._create_stat_card(
-            bottom_row,
-            "DANGEROUS",
-            f"{prediction_data['dangerous_count']} ({prediction_data['dangerous_pct']:.1f}%)",
-            config.COLOR_DANGER,
-            "⚠"
-        ).pack(side=tk.LEFT, padx=15)
-        
-        self._create_stat_card(
-            bottom_row,
-            "SAFE",
-            f"{prediction_data['safe_count']} ({prediction_data['safe_pct']:.1f}%)",
-            config.COLOR_SUCCESS,
-            "✓"
-        ).pack(side=tk.LEFT, padx=15)
-        
-        # Confidence row
-        conf_row = tk.Frame(grid, bg=config.COLOR_BG_PAPER)
-        conf_row.pack(pady=15)
-        
-        self._create_stat_card(
-            conf_row,
-            "AVG CONFIDENCE (DANGEROUS)",
-            f"{prediction_data['avg_confidence_dangerous']:.1%}",
-            config.COLOR_ACCENT_ORANGE,
-            "🎯"
-        ).pack(side=tk.LEFT, padx=15)
-        
-        self._create_stat_card(
-            conf_row,
-            "AVG CONFIDENCE (SAFE)",
-            f"{prediction_data['avg_confidence_safe']:.1%}",
-            config.COLOR_ACCENT_GREEN,
-            "🛡"
-        ).pack(side=tk.LEFT, padx=15)
-        
-        # Reset scroll
         self.main_canvas.yview_moveto(0)
     
     def _create_stat_card(self, parent, label: str, value: str, color: str, icon: str):

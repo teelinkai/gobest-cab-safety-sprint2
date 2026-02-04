@@ -375,7 +375,7 @@ class CynosureBatchView(tk.Frame):
             bg=config.COLOR_BG_CARD,
             highlightbackground=config.COLOR_BORDER_DARK,
             highlightthickness=2,
-            height=250  # Fixed height for nested scroll
+            height=250
         )
         list_container.pack(fill=tk.X)
         list_container.pack_propagate(False)
@@ -395,6 +395,7 @@ class CynosureBatchView(tk.Frame):
         
         self.file_list_frame = tk.Frame(self.file_canvas, bg=config.COLOR_BG_CARD)
         
+        # Update scrollregion when content changes
         self.file_list_frame.bind(
             "<Configure>",
             lambda e: self.file_canvas.configure(
@@ -402,11 +403,21 @@ class CynosureBatchView(tk.Frame):
             )
         )
         
-        self.file_canvas.create_window(
+        # === FIX STARTS HERE ===
+        # Capture the window ID so we can resize it
+        self.file_window_id = self.file_canvas.create_window(
             (0, 0),
             window=self.file_list_frame,
             anchor="nw"
         )
+        
+        # Force the inner frame width to match the canvas width
+        # This makes the list items expand to fill the container (centering them)
+        self.file_canvas.bind(
+            "<Configure>",
+            lambda e: self.file_canvas.itemconfig(self.file_window_id, width=e.width)
+        )
+        # === FIX ENDS HERE ===
         
         self.file_canvas.configure(yscrollcommand=file_scrollbar.set)
         

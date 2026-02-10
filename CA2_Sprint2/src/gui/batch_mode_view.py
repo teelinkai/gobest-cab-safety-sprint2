@@ -648,7 +648,8 @@ class CynosureBatchView(tk.Frame):
             
             self.after(0, lambda: self._finish_process(data))
         except Exception as e:
-            self.after(0, lambda: self._error_process(str(e)))
+            error_msg = str(e)   # capture NOW before Python deletes 'e'
+            self.after(0, lambda: self._error_process(error_msg))
     
     def _update_progress(self, progress: float, message: str):
         """Update progress bar"""
